@@ -363,6 +363,29 @@
       text-align: center;
     }
 
+    /* ── AFFILIATE LINK ON CARD ── */
+    .card-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--accent2);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.15s;
+    }
+    .card-link:hover { color: #fff; text-decoration: underline; }
+
+    /* ── LINK IN SIDEBAR ITEM ── */
+    .sb-item-link {
+      color: var(--text);
+      text-decoration: none;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.15s;
+    }
+    .sb-item-link:hover { color: var(--accent2); text-decoration: underline; }
+
     /* ── NO RESULTS ── */
     .no-results {
       grid-column: 1/-1;
@@ -411,49 +434,49 @@
 // ─────────────────────────────────────────
 const TOOLS = [
   // ── VIDEO ──────────────────────────────
-  { id:'runway',     name:'Runway Gen-3',    icon:'🎬', cat:'Video',    price:35,   plan:'Standard',   desc:'KI-Videogenerierung & -editing mit Gen-3 Alpha. Branchenführer für kreative Videos.' },
-  { id:'sora',       name:'Sora (OpenAI)',   icon:'🌀', cat:'Video',    price:20,   plan:'ChatGPT Plus',desc:'OpenAIs Videogenerator – cineastische Clips bis 20 Sek. aus Text-Prompts.' },
-  { id:'pika',       name:'Pika Labs',       icon:'⚡', cat:'Video',    price:28,   plan:'Standard',   desc:'Schneller Text-zu-Video Generator mit Stil-Steuerung und Inpainting.' },
-  { id:'kling',      name:'Kling AI',        icon:'🎥', cat:'Video',    price:36,   plan:'Standard',   desc:'Chinesischer Videogenerator mit realistischer Bewegung und langen Clips.' },
-  { id:'heygen',     name:'HeyGen',          icon:'🧑‍💼', cat:'Video',   price:29,   plan:'Creator',    desc:'KI-Avatar-Videos & Talking-Head-Clips. Perfekt für Marketing-Videos.' },
-  { id:'luma',       name:'Luma Dream Machine',icon:'✨',cat:'Video',   price:30,   plan:'Standard',   desc:'Hochwertige 3D-Video- und Szenengenierung von Luma AI.' },
+  { id:'runway',     name:'Runway Gen-3',    icon:'🎬', cat:'Video',    price:35,   plan:'Standard',        url:'https://runwayml.com',          desc:'KI-Videogenerierung & -editing mit Gen-3 Alpha. Branchenführer für kreative Videos.' },
+  { id:'sora',       name:'Sora (OpenAI)',   icon:'🌀', cat:'Video',    price:20,   plan:'ChatGPT Plus',    url:'https://openai.com/sora',       desc:'OpenAIs Videogenerator – cineastische Clips bis 20 Sek. aus Text-Prompts.' },
+  { id:'pika',       name:'Pika Labs',       icon:'⚡', cat:'Video',    price:28,   plan:'Standard',        url:'https://pika.art',              desc:'Schneller Text-zu-Video Generator mit Stil-Steuerung und Inpainting.' },
+  { id:'kling',      name:'Kling AI',        icon:'🎥', cat:'Video',    price:36,   plan:'Standard',        url:'https://klingai.com',           desc:'Chinesischer Videogenerator mit realistischer Bewegung und langen Clips.' },
+  { id:'heygen',     name:'HeyGen',          icon:'🧑‍💼', cat:'Video',   price:29,   plan:'Creator',         url:'https://heygen.com',            desc:'KI-Avatar-Videos & Talking-Head-Clips. Perfekt für Marketing-Videos.' },
+  { id:'luma',       name:'Luma Dream Machine',icon:'✨',cat:'Video',   price:30,   plan:'Standard',        url:'https://lumalabs.ai',           desc:'Hochwertige 3D-Video- und Szenengenierung von Luma AI.' },
 
   // ── AUDIO ───────────────────────────────
-  { id:'eleven',     name:'ElevenLabs',      icon:'🎙️', cat:'Audio',   price:22,   plan:'Creator',    desc:'Realistischste KI-Stimmen am Markt. Voice Cloning & Synchronisation.' },
-  { id:'descript',   name:'Descript',        icon:'🎚️', cat:'Audio',   price:12,   plan:'Creator',    desc:'Audio-/Video-Editing via Texttranskript. Overdub zum Stimmen-Editing.' },
-  { id:'adobe-pod',  name:'Adobe Podcast',   icon:'🎧', cat:'Audio',   price:10,   plan:'Enhance',    desc:'KI-gestützte Audiobereinigung & Podcastproduktion von Adobe.' },
-  { id:'whisper',    name:'AssemblyAI',       icon:'🔊', cat:'Audio',   price:15,   plan:'Starter',    desc:'Präzise Transkription, Sentimentanalyse und Speaker-Detektion per API.' },
+  { id:'eleven',     name:'ElevenLabs',      icon:'🎙️', cat:'Audio',   price:22,   plan:'Creator',         url:'https://elevenlabs.io',         desc:'Realistischste KI-Stimmen am Markt. Voice Cloning & Synchronisation.' },
+  { id:'descript',   name:'Descript',        icon:'🎚️', cat:'Audio',   price:12,   plan:'Creator',         url:'https://descript.com',          desc:'Audio-/Video-Editing via Texttranskript. Overdub zum Stimmen-Editing.' },
+  { id:'adobe-pod',  name:'Adobe Podcast',   icon:'🎧', cat:'Audio',   price:10,   plan:'Enhance',         url:'https://podcast.adobe.com',     desc:'KI-gestützte Audiobereinigung & Podcastproduktion von Adobe.' },
+  { id:'whisper',    name:'AssemblyAI',       icon:'🔊', cat:'Audio',   price:15,   plan:'Starter',         url:'https://assemblyai.com',        desc:'Präzise Transkription, Sentimentanalyse und Speaker-Detektion per API.' },
 
   // ── MUSIK ───────────────────────────────
-  { id:'suno',       name:'Suno',            icon:'🎵', cat:'Musik',    price:10,   plan:'Pro',        desc:'Vollständige Songs aus Text-Prompts generieren – Vocals, Instrumente & Mix.' },
-  { id:'udio',       name:'Udio',            icon:'🎶', cat:'Musik',    price:10,   plan:'Standard',   desc:'Hochwertige Musikgenerierung mit präziser Genre- und Stilkontrolle.' },
-  { id:'mubert',     name:'Mubert',          icon:'🎸', cat:'Musik',    price:14,   plan:'Ambassador', desc:'Lizenzfreie KI-Musik für Content Creator – endlose generative Tracks.' },
+  { id:'suno',       name:'Suno',            icon:'🎵', cat:'Musik',    price:10,   plan:'Pro',             url:'https://suno.com',              desc:'Vollständige Songs aus Text-Prompts generieren – Vocals, Instrumente & Mix.' },
+  { id:'udio',       name:'Udio',            icon:'🎶', cat:'Musik',    price:10,   plan:'Standard',        url:'https://udio.com',              desc:'Hochwertige Musikgenerierung mit präziser Genre- und Stilkontrolle.' },
+  { id:'mubert',     name:'Mubert',          icon:'🎸', cat:'Musik',    price:14,   plan:'Ambassador',      url:'https://mubert.com',            desc:'Lizenzfreie KI-Musik für Content Creator – endlose generative Tracks.' },
 
   // ── BILD ────────────────────────────────
-  { id:'midjourney', name:'Midjourney',      icon:'🖼️', cat:'Bild',    price:30,   plan:'Standard',   desc:'Industriestandard für KI-Bildgenerierung. Unübertroffene Bildqualität & Stil.' },
-  { id:'firefly',    name:'Adobe Firefly',   icon:'🔥', cat:'Bild',    price:5,    plan:'Starter',    desc:'Kommerziel safe Bildgenerierung von Adobe. Direkt in Creative Cloud integriert.' },
-  { id:'leonardo',   name:'Leonardo AI',     icon:'🎨', cat:'Bild',    price:12,   plan:'Apprentice', desc:'Feinabstimmbare Bildgenerierung mit eigenen Models & LoRA-Training.' },
-  { id:'ideogram',   name:'Ideogram',        icon:'💬', cat:'Bild',    price:20,   plan:'Pro',        desc:'Beste Textwiedergabe in KI-Bildern. Ideal für Logos und Grafiken.' },
-  { id:'dalle',      name:'DALL-E 3',        icon:'🌈', cat:'Bild',    price:20,   plan:'ChatGPT Plus',desc:'OpenAIs DALL-E 3 direkt in ChatGPT. Hochwertige Bilder via natürlicher Sprache.' },
+  { id:'midjourney', name:'Midjourney',      icon:'🖼️', cat:'Bild',    price:30,   plan:'Standard',        url:'https://midjourney.com',        desc:'Industriestandard für KI-Bildgenerierung. Unübertroffene Bildqualität & Stil.' },
+  { id:'firefly',    name:'Adobe Firefly',   icon:'🔥', cat:'Bild',    price:5,    plan:'Starter',         url:'https://firefly.adobe.com',     desc:'Kommerziell safe Bildgenerierung von Adobe. Direkt in Creative Cloud integriert.' },
+  { id:'leonardo',   name:'Leonardo AI',     icon:'🎨', cat:'Bild',    price:12,   plan:'Apprentice',      url:'https://leonardo.ai',           desc:'Feinabstimmbare Bildgenerierung mit eigenen Models & LoRA-Training.' },
+  { id:'ideogram',   name:'Ideogram',        icon:'💬', cat:'Bild',    price:20,   plan:'Pro',             url:'https://ideogram.ai',           desc:'Beste Textwiedergabe in KI-Bildern. Ideal für Logos und Grafiken.' },
+  { id:'dalle',      name:'DALL-E 3',        icon:'🌈', cat:'Bild',    price:20,   plan:'ChatGPT Plus',    url:'https://openai.com/chatgpt',    desc:'OpenAIs DALL-E 3 direkt in ChatGPT. Hochwertige Bilder via natürlicher Sprache.' },
 
   // ── TEXT / KI-CHAT ─────────────────────
-  { id:'chatgpt',    name:'ChatGPT Plus',    icon:'🤖', cat:'Text',     price:20,   plan:'Plus',       desc:'GPT-4o + o1, Bildgenerierung (DALL-E), Websuche & Dateianalyse von OpenAI.' },
-  { id:'claude',     name:'Claude Pro',      icon:'🧠', cat:'Text',     price:20,   plan:'Pro',        desc:'Anthropics Claude – beste Texterstellung, langer Kontext bis 200K Token.' },
-  { id:'gemini',     name:'Gemini Advanced', icon:'💎', cat:'Text',     price:20,   plan:'Advanced',   desc:'Googles Gemini Ultra mit tiefer Google-Workspace-Integration.' },
-  { id:'perplexity', name:'Perplexity Pro',  icon:'🔍', cat:'Text',     price:20,   plan:'Pro',        desc:'KI-Suchmaschine mit Quellenangaben. Bester Ersatz für klassische Websuche.' },
-  { id:'jasper',     name:'Jasper AI',       icon:'✍️', cat:'Text',    price:49,   plan:'Creator',    desc:'Marketing-fokussierter KI-Schreibassistent mit Brand-Voice-Training.' },
+  { id:'chatgpt',    name:'ChatGPT Plus',    icon:'🤖', cat:'Text',     price:20,   plan:'Plus',            url:'https://chat.openai.com',       desc:'GPT-4o + o1, Bildgenerierung (DALL-E), Websuche & Dateianalyse von OpenAI.' },
+  { id:'claude',     name:'Claude Pro',      icon:'🧠', cat:'Text',     price:20,   plan:'Pro',             url:'https://claude.ai',             desc:'Anthropics Claude – beste Texterstellung, langer Kontext bis 200K Token.' },
+  { id:'gemini',     name:'Gemini Advanced', icon:'💎', cat:'Text',     price:20,   plan:'Advanced',        url:'https://gemini.google.com',     desc:'Googles Gemini Ultra mit tiefer Google-Workspace-Integration.' },
+  { id:'perplexity', name:'Perplexity Pro',  icon:'🔍', cat:'Text',     price:20,   plan:'Pro',             url:'https://perplexity.ai',         desc:'KI-Suchmaschine mit Quellenangaben. Bester Ersatz für klassische Websuche.' },
+  { id:'jasper',     name:'Jasper AI',       icon:'✍️', cat:'Text',    price:49,   plan:'Creator',         url:'https://jasper.ai',             desc:'Marketing-fokussierter KI-Schreibassistent mit Brand-Voice-Training.' },
 
   // ── CODE ────────────────────────────────
-  { id:'copilot',    name:'GitHub Copilot',  icon:'👾', cat:'Code',     price:10,   plan:'Individual', desc:'KI-Pair-Programmer direkt im Editor. Kontextbezogene Code-Vervollständigung.' },
-  { id:'cursor',     name:'Cursor',          icon:'⌨️', cat:'Code',    price:20,   plan:'Pro',        desc:'KI-nativer Code-Editor mit Codebase-Verständnis. Beste Coding-AI 2026.' },
-  { id:'tabnine',    name:'Tabnine',         icon:'🔮', cat:'Code',     price:12,   plan:'Pro',        desc:'Privacy-fokussierter KI-Codeassistent mit on-premise Option.' },
-  { id:'replit',     name:'Replit AI',       icon:'🔄', cat:'Code',     price:20,   plan:'Core',       desc:'Browser-basierter Coding-Workspace mit KI-Assistent und Deployment.' },
+  { id:'copilot',    name:'GitHub Copilot',  icon:'👾', cat:'Code',     price:10,   plan:'Individual',      url:'https://github.com/features/copilot', desc:'KI-Pair-Programmer direkt im Editor. Kontextbezogene Code-Vervollständigung.' },
+  { id:'cursor',     name:'Cursor',          icon:'⌨️', cat:'Code',    price:20,   plan:'Pro',             url:'https://cursor.com',            desc:'KI-nativer Code-Editor mit Codebase-Verständnis. Beste Coding-AI 2026.' },
+  { id:'tabnine',    name:'Tabnine',         icon:'🔮', cat:'Code',     price:12,   plan:'Pro',             url:'https://tabnine.com',           desc:'Privacy-fokussierter KI-Codeassistent mit on-premise Option.' },
+  { id:'replit',     name:'Replit AI',       icon:'🔄', cat:'Code',     price:20,   plan:'Core',            url:'https://replit.com',            desc:'Browser-basierter Coding-Workspace mit KI-Assistent und Deployment.' },
 
   // ── PRODUKTIVITÄT ───────────────────────
-  { id:'notion-ai',  name:'Notion AI',       icon:'📝', cat:'Produktivität', price:10, plan:'Add-on',  desc:'KI direkt im Notion-Workspace: Zusammenfassen, Schreiben, Übersetzen.' },
-  { id:'gamma',      name:'Gamma',           icon:'📊', cat:'Produktivität', price:10, plan:'Plus',    desc:'KI-gestützte Präsentationen & Webpages. Fertige Slides in Sekunden.' },
-  { id:'otter',      name:'Otter.ai',        icon:'🦦', cat:'Produktivität', price:17, plan:'Pro',     desc:'Automatische Meeting-Transkription & KI-Zusammenfassungen.' },
-  { id:'zapier-ai',  name:'Zapier AI',       icon:'⚡', cat:'Produktivität', price:20, plan:'Starter', desc:'KI-gestützte Automationen zwischen 6000+ Apps ohne Coding.' },
+  { id:'notion-ai',  name:'Notion AI',       icon:'📝', cat:'Produktivität', price:10, plan:'Add-on',       url:'https://notion.so/product/ai',  desc:'KI direkt im Notion-Workspace: Zusammenfassen, Schreiben, Übersetzen.' },
+  { id:'gamma',      name:'Gamma',           icon:'📊', cat:'Produktivität', price:10, plan:'Plus',         url:'https://gamma.app',             desc:'KI-gestützte Präsentationen & Webpages. Fertige Slides in Sekunden.' },
+  { id:'otter',      name:'Otter.ai',        icon:'🦦', cat:'Produktivität', price:17, plan:'Pro',          url:'https://otter.ai',              desc:'Automatische Meeting-Transkription & KI-Zusammenfassungen.' },
+  { id:'zapier-ai',  name:'Zapier AI',       icon:'⚡', cat:'Produktivität', price:20, plan:'Starter',      url:'https://zapier.com',            desc:'KI-gestützte Automationen zwischen 6000+ Apps ohne Coding.' },
 ];
 
 const CAT_ICONS = {
@@ -464,6 +487,11 @@ const CAT_CLASS = {
   'Video':'cat-video','Audio':'cat-audio','Musik':'cat-musik',
   'Bild':'cat-bild','Text':'cat-text','Code':'cat-code','Produktivität':'cat-prod'
 };
+
+// ─────────────────────────────────────────
+//  HELPERS
+// ─────────────────────────────────────────
+const fmt = n => n.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 // ─────────────────────────────────────────
 //  STATE
@@ -518,8 +546,9 @@ function render() {
       <div class="card-name">${t.name}</div>
       <span class="card-cat ${CAT_CLASS[t.cat] || ''}">${CAT_ICONS[t.cat] || ''} ${t.cat}</span>
       <p class="card-desc">${t.desc}</p>
-      <div class="card-price">${t.price === 0 ? 'Kostenlos' : `€ ${t.price}`}<small>${t.price > 0 ? ' /Mo.' : ''}</small></div>
+      <div class="card-price">${t.price === 0 ? 'Kostenlos' : `€ ${fmt(t.price)}`}<small>${t.price > 0 ? ' /Mo.' : ''}</small></div>
       <div class="card-plan">${t.plan}</div>
+      <a class="card-link" href="${t.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Jetzt testen →</a>
     </div>
   `).join('');
 }
@@ -576,15 +605,15 @@ function renderSidebar() {
       <div class="sb-group">
         <div class="sb-group-header">
           <span class="sb-group-label">${CAT_ICONS[cat] || '🔧'} ${cat}</span>
-          <span class="sb-group-total">€ ${catTotal}/Mo.</span>
+          <span class="sb-group-total">€ ${fmt(catTotal)}/Mo.</span>
         </div>
         ${items.map(t => `
           <div class="sb-item">
             <div class="sb-item-name">
               <span class="sb-item-icon">${t.icon}</span>
-              <span class="sb-item-label">${t.name}</span>
+              <a class="sb-item-label sb-item-link" href="${t.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="${t.name} öffnen">${t.name}</a>
             </div>
-            <span class="sb-item-price">€ ${t.price}</span>
+            <span class="sb-item-price">€ ${fmt(t.price)}</span>
             <button class="sb-item-remove" onclick="event.stopPropagation(); remove('${t.id}')" title="Entfernen">✕</button>
           </div>
         `).join('')}
@@ -606,14 +635,14 @@ function renderSidebar() {
       <hr class="divider" style="margin:0.25rem 0"/>
       <div class="total-row main">
         <span class="label">Gesamt / Monat</span>
-        <span class="value">€ ${totalMonthly}</span>
+        <span class="value">€ ${fmt(totalMonthly)}</span>
       </div>
       <div class="total-row annual">
         <span class="label">Gesamt / Jahr</span>
-        <span class="value">€ ${totalAnnual.toLocaleString('de-DE')}</span>
+        <span class="value">€ ${fmt(totalAnnual)}</span>
       </div>
     </div>
-    ${totalMonthly > 100 ? `<div class="savings-note">💡 Mit Jahresabo sparst du ca. <strong>€ ${Math.round(totalMonthly * 12 * 0.17)}</strong>/Jahr (ø 17% Rabatt)</div>` : ''}
+    ${totalMonthly > 0 ? `<div class="savings-note">💡 Mit Jahresabo sparst du ca. <strong>€ ${fmt(Math.round(totalMonthly * 12 * 0.17))}</strong>/Jahr (ø 17% Rabatt)</div>` : ''}
     <button class="btn-clear" onclick="clearAll()">🗑 Auswahl zurücksetzen</button>
   `;
 
