@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 """
-Memecoin Scanner - Daily report generator using CoinGecko's free public API.
+Memecoin Scanner v2 — Daily report using DexScreener's free public API.
 
-DISCLAIMER: This tool is for informational and educational purposes only.
-It does NOT constitute financial advice. Cryptocurrency investments,
-especially memecoins, are extremely high-risk and speculative. You could
-lose all of your investment. Always do your own research (DYOR) and consult
-a qualified financial advisor before making any investment decisions.
-The authors of this tool are not responsible for any financial losses.
+DISCLAIMER: This tool is for informational and educational purposes ONLY.
+It does NOT constitute financial advice. Memecoins are extremely high-risk.
+You could lose ALL of your investment. DYOR. Consult a financial advisor.
 """
 
 import json
@@ -20,54 +17,22 @@ from pathlib import Path
 from typing import Optional
 
 import requests
-from dateutil.parser import parse as parse_date
 
 # ---------------------------------------------------------------------------
-# Configuration
+# Config
 # ---------------------------------------------------------------------------
 
-BASE_URL = "https://api.coingecko.com/api/v3"
-
-ENDPOINTS = {
-    "trending": f"{BASE_URL}/search/trending",
-    "meme_by_volume": (
-        f"{BASE_URL}/coins/markets"
-        "?vs_currency=usd"
-        "&category=meme-token"
-        "&order=volume_desc"
-        "&per_page=100"
-        "&page=1"
-        "&sparkline=false"
-        "&price_change_percentage=24h,7d"
-    ),
-    "meme_by_change": (
-        f"{BASE_URL}/coins/markets"
-        "?vs_currency=usd"
-        "&category=meme-token"
-        "&order=percent_change_desc_24h"
-        "&per_page=50"
-        "&page=1"
-        "&sparkline=false"
-        "&price_change_percentage=24h,7d"
-    ),
-}
-
-# Scoring weights (must sum to 100)
-SCORE_WEIGHTS = {
-    "volume_mcap_ratio": 30,   # Volume/MCap ratio (liquidity signal)
-    "price_change_24h": 25,    # 24 h momentum sweet spot
-    "trending": 20,            # Trending on CoinGecko
-    "market_cap_range": 15,    # Size sweet spot for growth potential
-    "price_change_7d": 10,     # 7-day momentum confirmation
-}
-
-RETRY_COUNT = 3
-RETRY_BACKOFF_BASE = 2        # seconds
-API_SLEEP = 1.5               # seconds between API calls
-
+DEXSCREENER_BASE = "https://api.dexscreener.com"
 REPORTS_DIR = Path(__file__).parent / "reports"
+TOP_N = 10
+RETRY_COUNT = 3
+API_SLEEP = 1.2  # seconds between calls to respect rate limits
 
-TOP_N = 10                    # How many coins to include in the report
+# Focus on the most active memecoin chains
+ALLOWED_CHAINS = {"solana", "ethereum", "bsc", "base", "avalanche"}
+
+# Max Telegram message length
+TELEGRAM_MAX_CHARS = 4000
 
 logging.basicConfig(
     level=logging.INFO,
@@ -78,244 +43,176 @@ log = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# HTTP helpers
+# HTTP helper
 # ---------------------------------------------------------------------------
 
 def fetch_json(url: str, retries: int = RETRY_COUNT) -> Optional[dict | list]:
-    """Fetch JSON from *url* with retry / back-off logic."""
-    headers = {
-        "Accept": "application/json",
-        "User-Agent": "memecoin-scanner/1.0 (educational-tool)",
-    }
+    headers = {"Accept": "application/json", "User-Agent": "memecoin-scanner/2.0"}
     for attempt in range(1, retries + 1):
         try:
             log.info("GET %s (attempt %d/%d)", url, attempt, retries)
             resp = requests.get(url, headers=headers, timeout=20)
             if resp.status_code == 429:
-                wait = RETRY_BACKOFF_BASE ** attempt
-                log.warning("Rate-limited (429). Sleeping %ss before retry.", wait)
+                wait = 2 ** attempt
+                log.warning("Rate-limited (429). Sleeping %ss.", wait)
                 time.sleep(wait)
                 continue
             resp.raise_for_status()
             return resp.json()
-        except requests.exceptions.ConnectionError as exc:
-            log.error("Connection error: %s", exc)
-        except requests.exceptions.Timeout:
-            log.error("Request timed out.")
         except requests.exceptions.HTTPError as exc:
-            log.error("HTTP error %s: %s", resp.status_code, exc)
+            log.error("HTTP %s: %s", resp.status_code, exc)
             if resp.status_code < 500:
-                # Client error – no point retrying
                 return None
-        except Exception as exc:  # noqa: BLE001
-            log.error("Unexpected error: %s", exc)
-
+        except Exception as exc:
+            log.error("Error: %s", exc)
         if attempt < retries:
-            wait = RETRY_BACKOFF_BASE ** attempt
-            log.info("Retrying in %ss …", wait)
-            time.sleep(wait)
-
-    log.error("All %d attempts failed for %s", retries, url)
+            time.sleep(2 ** attempt)
+    log.error("All %d attempts failed: %s", retries, url)
     return None
 
 
 # ---------------------------------------------------------------------------
-# Data fetching
+# DexScreener data fetching
 # ---------------------------------------------------------------------------
 
-def get_trending_ids() -> set[str]:
-    """Return coin IDs currently trending on CoinGecko."""
-    data = fetch_json(ENDPOINTS["trending"])
-    time.sleep(API_SLEEP)
-    if not data or "coins" not in data:
-        log.warning("Could not fetch trending coins.")
-        return set()
-    ids = {item["item"]["id"] for item in data.get("coins", [])}
-    log.info("Trending coin IDs: %s", ids)
-    return ids
-
-
-def get_meme_coins_by_volume() -> list[dict]:
-    """Fetch meme-token coins ordered by 24 h volume descending."""
-    data = fetch_json(ENDPOINTS["meme_by_volume"])
+def get_boosted_tokens() -> list[dict]:
+    """Top boosted/promoted tokens — strong proxy for trending memecoins."""
+    data = fetch_json(f"{DEXSCREENER_BASE}/token-boosts/top/v1")
     time.sleep(API_SLEEP)
     if not isinstance(data, list):
-        log.warning("Unexpected response from meme_by_volume endpoint.")
+        log.warning("No boosted token data returned.")
         return []
-    log.info("Fetched %d meme coins (by volume).", len(data))
-    return data
+    filtered = [t for t in data if t.get("chainId") in ALLOWED_CHAINS]
+    log.info("Boosted tokens on allowed chains: %d", len(filtered))
+    return filtered[:30]
 
 
-def get_meme_coins_by_change() -> list[dict]:
-    """Fetch meme-token coins ordered by 24 h price change descending."""
-    data = fetch_json(ENDPOINTS["meme_by_change"])
+def get_latest_boosted_tokens() -> list[dict]:
+    """Most recently boosted tokens — catches early movers."""
+    data = fetch_json(f"{DEXSCREENER_BASE}/token-boosts/latest/v1")
     time.sleep(API_SLEEP)
     if not isinstance(data, list):
-        log.warning("Unexpected response from meme_by_change endpoint.")
         return []
-    log.info("Fetched %d meme coins (by 24h change).", len(data))
-    return data
+    filtered = [t for t in data if t.get("chainId") in ALLOWED_CHAINS]
+    log.info("Latest boosted tokens on allowed chains: %d", len(filtered))
+    return filtered[:20]
 
 
-def merge_coin_lists(primary: list[dict], secondary: list[dict]) -> list[dict]:
-    """Merge two coin lists, deduplicating by coin id."""
-    seen: set[str] = set()
-    merged: list[dict] = []
-    for coin in primary + secondary:
-        cid = coin.get("id")
-        if cid and cid not in seen:
-            seen.add(cid)
-            merged.append(coin)
-    log.info("Merged list contains %d unique coins.", len(merged))
-    return merged
+def get_pair_data(token_address: str) -> list[dict]:
+    """All trading pairs for a given token address."""
+    data = fetch_json(f"{DEXSCREENER_BASE}/latest/dex/tokens/{token_address}")
+    time.sleep(API_SLEEP)
+    if not data or "pairs" not in data:
+        return []
+    return data["pairs"] or []
+
+
+def select_best_pair(pairs: list[dict]) -> Optional[dict]:
+    """Pick the pair with the highest 24h volume on an allowed chain."""
+    valid = [
+        p for p in pairs
+        if p.get("chainId") in ALLOWED_CHAINS
+        and (p.get("volume") or {}).get("h24", 0) > 0
+        and p.get("priceUsd")
+    ]
+    if not valid:
+        return None
+    return max(valid, key=lambda p: (p.get("volume") or {}).get("h24", 0))
 
 
 # ---------------------------------------------------------------------------
-# Scoring
+# Scoring (max 100 points)
 # ---------------------------------------------------------------------------
 
-def score_volume_mcap(coin: dict) -> float:
-    """
-    Volume/MCap ratio scoring.
-    > 0.3  → full 30 pts  (high activity relative to size)
-    0.1-0.3 → scaled
-    < 0.1  → 0 pts
-    """
-    volume = coin.get("total_volume") or 0
-    mcap = coin.get("market_cap") or 0
-    if mcap <= 0:
-        return 0.0
-    ratio = volume / mcap
-    if ratio >= 0.3:
-        return float(SCORE_WEIGHTS["volume_mcap_ratio"])
-    if ratio >= 0.1:
-        # linear scale 0 → 30 across 0.10 … 0.30
-        return round((ratio - 0.1) / 0.2 * SCORE_WEIGHTS["volume_mcap_ratio"], 2)
-    return 0.0
+def score_coin(pair: dict, is_boosted: bool) -> dict:
+    vol_24h = (pair.get("volume") or {}).get("h24", 0) or 0
+    liq = (pair.get("liquidity") or {}).get("usd", 0) or 0
+    chg_24h = (pair.get("priceChange") or {}).get("h24", 0) or 0
+    chg_1h = (pair.get("priceChange") or {}).get("h1", 0) or 0
+    h24_txns = (pair.get("txns") or {}).get("h24") or {}
+    buys = h24_txns.get("buys", 0) or 0
+    sells = h24_txns.get("sells", 1) or 1
 
+    # 1. Vol / Liquidity ratio (30 pts) — high ratio = intense trading activity
+    vol_liq_score = 0.0
+    if liq > 0:
+        ratio = vol_24h / liq
+        if ratio >= 5:
+            vol_liq_score = 30.0
+        elif ratio >= 1:
+            vol_liq_score = round((ratio - 1) / 4 * 30, 2)
 
-def score_price_change_24h(coin: dict) -> float:
-    """
-    24 h price change scoring.
-    Sweet spot: 20 % – 200 %  → max 25 pts
-    Already up > 1000 %       → 0 pts (blown up / exhausted)
-    10 % – 20 %               → partial credit
-    Negative                  → 0 pts
-    """
-    pct = coin.get("price_change_percentage_24h") or 0.0
-    if pct > 1000 or pct < 0:
-        return 0.0
-    if 20 <= pct <= 200:
-        return float(SCORE_WEIGHTS["price_change_24h"])
-    if 10 <= pct < 20:
-        return round((pct - 10) / 10 * SCORE_WEIGHTS["price_change_24h"], 2)
-    if 200 < pct <= 1000:
-        # diminishing returns above the sweet spot
-        return round(max(0, 1 - (pct - 200) / 800) * SCORE_WEIGHTS["price_change_24h"], 2)
-    return 0.0
+    # 2. 24h price change (25 pts) — sweet spot +20% to +500%
+    chg_score = 0.0
+    if 20 <= chg_24h <= 500:
+        chg_score = 25.0
+    elif 10 <= chg_24h < 20:
+        chg_score = round((chg_24h - 10) / 10 * 25, 2)
+    elif 500 < chg_24h <= 2000:
+        chg_score = round(max(0.0, 1 - (chg_24h - 500) / 1500) * 25, 2)
 
+    # 3. Trending / boosted status (20 pts)
+    boost_score = 20.0 if is_boosted else 0.0
 
-def score_trending(coin: dict, trending_ids: set[str]) -> float:
-    """20 pts if coin is currently trending on CoinGecko."""
-    return float(SCORE_WEIGHTS["trending"]) if coin.get("id") in trending_ids else 0.0
+    # 4. Liquidity range (15 pts) — sweet spot $50K–$5M (room to grow)
+    liq_score = 0.0
+    if 50_000 <= liq <= 5_000_000:
+        liq_score = 15.0
+    elif 10_000 <= liq < 50_000:
+        liq_score = round((liq - 10_000) / 40_000 * 15, 2)
+    elif 5_000_000 < liq <= 50_000_000:
+        liq_score = round(max(0.0, 1 - (liq - 5_000_000) / 45_000_000) * 15, 2)
 
+    # 5. Buy pressure (10 pts) — more buys than sells = bullish
+    total_txns = buys + sells
+    buy_ratio = buys / total_txns if total_txns > 0 else 0.5
+    buy_score = round(buy_ratio * 10, 2) if buy_ratio > 0.5 else 0.0
 
-def score_market_cap(coin: dict) -> float:
-    """
-    Market-cap sweet spot for explosive growth: $500K – $50M.
-    Outside that range scores 0.
-    Inside: max 15 pts, peak at $1M – $10M.
-    """
-    mcap = coin.get("market_cap") or 0
-    low, high = 500_000, 50_000_000
-    peak_low, peak_high = 1_000_000, 10_000_000
-    if mcap < low or mcap > high:
-        return 0.0
-    if peak_low <= mcap <= peak_high:
-        return float(SCORE_WEIGHTS["market_cap_range"])
-    if mcap < peak_low:
-        return round((mcap - low) / (peak_low - low) * SCORE_WEIGHTS["market_cap_range"], 2)
-    # mcap > peak_high
-    return round(
-        max(0, 1 - (mcap - peak_high) / (high - peak_high)) * SCORE_WEIGHTS["market_cap_range"],
-        2,
-    )
-
-
-def score_7d_momentum(coin: dict) -> float:
-    """
-    7-day momentum confirmation: 10 pts.
-    Positive 7d and not already blown up (< 500%) → full score.
-    """
-    pct_7d = coin.get("price_change_percentage_7d_in_currency") or 0.0
-    if pct_7d <= 0:
-        return 0.0
-    if pct_7d > 500:
-        return 0.0
-    # Scale: 0 … 100 % → 0 … 10 pts
-    return round(min(pct_7d / 100, 1.0) * SCORE_WEIGHTS["price_change_7d"], 2)
-
-
-def compute_score(coin: dict, trending_ids: set[str]) -> dict:
-    """Compute breakdown and total score for a single coin."""
-    breakdown = {
-        "volume_mcap": score_volume_mcap(coin),
-        "price_24h": score_price_change_24h(coin),
-        "trending": score_trending(coin, trending_ids),
-        "market_cap": score_market_cap(coin),
-        "momentum_7d": score_7d_momentum(coin),
+    total = round(vol_liq_score + chg_score + boost_score + liq_score + buy_score, 2)
+    return {
+        "total": total,
+        "breakdown": {
+            "vol_liq_ratio": vol_liq_score,
+            "price_24h": chg_score,
+            "trending": boost_score,
+            "liquidity_range": liq_score,
+            "buy_pressure": buy_score,
+        },
     }
-    total = round(sum(breakdown.values()), 2)
-    return {"total": total, "breakdown": breakdown}
 
 
-def build_reasons(coin: dict, score: dict, trending_ids: set[str]) -> list[str]:
-    """Return human-readable reasons for the score."""
+def build_reasons(pair: dict, score: dict, is_boosted: bool) -> list[str]:
     reasons: list[str] = []
     bd = score["breakdown"]
+    vol_24h = (pair.get("volume") or {}).get("h24", 0) or 0
+    liq = (pair.get("liquidity") or {}).get("usd", 0) or 0
+    chg_24h = (pair.get("priceChange") or {}).get("h24", 0) or 0
+    h24_txns = (pair.get("txns") or {}).get("h24") or {}
+    buys = h24_txns.get("buys", 0) or 0
+    sells = h24_txns.get("sells", 0) or 0
 
-    volume = coin.get("total_volume") or 0
-    mcap = coin.get("market_cap") or 0
-    ratio = (volume / mcap) if mcap > 0 else 0
-    if bd["volume_mcap"] > 0:
-        reasons.append(f"Vol/MCap={ratio:.2f} (high activity)")
-
-    pct_24h = coin.get("price_change_percentage_24h") or 0
+    if bd["vol_liq_ratio"] > 0 and liq > 0:
+        reasons.append(f"Vol/Liq={vol_24h/liq:.1f}x (extreme trading activity)")
     if bd["price_24h"] > 0:
-        reasons.append(f"24h +{pct_24h:.1f}% (momentum sweet spot)")
-
+        reasons.append(f"+{chg_24h:.1f}% in 24h (starke Momentum-Phase)")
     if bd["trending"] > 0:
-        reasons.append("Trending on CoinGecko")
-
-    if bd["market_cap"] > 0:
-        reasons.append(f"MCap ${mcap:,.0f} (growth-stage size)")
-
-    pct_7d = coin.get("price_change_percentage_7d_in_currency") or 0
-    if bd["momentum_7d"] > 0:
-        reasons.append(f"7d +{pct_7d:.1f}% (sustained momentum)")
-
-    return reasons if reasons else ["No strong signals detected"]
+        reasons.append("Trending & promoted auf DexScreener")
+    if bd["liquidity_range"] > 0:
+        reasons.append(f"Liquidität ${liq:,.0f} (ideale Wachstumsphase)")
+    if bd["buy_pressure"] > 0 and (buys + sells) > 0:
+        pct = buys / (buys + sells) * 100
+        reasons.append(f"{pct:.0f}% Kaufdruck ({buys} Käufe vs {sells} Verkäufe)")
+    return reasons or ["Kein starkes Signal erkannt"]
 
 
 # ---------------------------------------------------------------------------
-# Report generation
+# Formatting helpers
 # ---------------------------------------------------------------------------
 
-def format_large_number(n: Optional[float]) -> str:
-    """Format large numbers as $1.2M, $500K, etc."""
-    if n is None:
-        return "N/A"
-    if n >= 1_000_000_000:
-        return f"${n / 1_000_000_000:.2f}B"
-    if n >= 1_000_000:
-        return f"${n / 1_000_000:.2f}M"
-    if n >= 1_000:
-        return f"${n / 1_000:.1f}K"
-    return f"${n:.4f}"
-
-
-def format_price(p: Optional[float]) -> str:
-    if p is None:
+def fmt_price(p) -> str:
+    try:
+        p = float(p)
+    except (TypeError, ValueError):
         return "N/A"
     if p < 0.000001:
         return f"${p:.10f}"
@@ -326,130 +223,177 @@ def format_price(p: Optional[float]) -> str:
     return f"${p:.2f}"
 
 
-def generate_markdown_report(
-    ranked_coins: list[dict],
-    run_at: datetime,
-    report_path: Path,
-) -> str:
-    """Build and return a Markdown report string."""
+def fmt_num(n) -> str:
+    try:
+        n = float(n)
+    except (TypeError, ValueError):
+        return "N/A"
+    if n >= 1e9:
+        return f"${n/1e9:.2f}B"
+    if n >= 1e6:
+        return f"${n/1e6:.2f}M"
+    if n >= 1e3:
+        return f"${n/1e3:.1f}K"
+    return f"${n:.0f}"
+
+
+# ---------------------------------------------------------------------------
+# Telegram message
+# ---------------------------------------------------------------------------
+
+def generate_telegram_message(ranked: list[dict], run_at: datetime) -> str:
+    date_str = run_at.strftime("%Y-%m-%d")
+    time_str = run_at.strftime("%H:%M UTC")
+    medals = ["🥇", "🥈", "🥉"] + ["🔹"] * 20
+
+    lines = [
+        f"🚀 <b>Memecoin Scanner — {date_str}</b>",
+        f"🕗 {time_str}  |  Quelle: DexScreener",
+        "",
+        "⚠️ <i>Kein Finanzrat. Nur zur Info. DYOR!</i>",
+        "",
+        f"🏆 <b>TOP {len(ranked)} MEMECOINS</b>",
+        "",
+    ]
+
+    for i, entry in enumerate(ranked):
+        pair = entry["pair"]
+        score = entry["score"]
+        reasons = entry["reasons"]
+        medal = medals[i] if i < len(medals) else "🔹"
+
+        name = (pair.get("baseToken") or {}).get("name", "?")
+        symbol = (pair.get("baseToken") or {}).get("symbol", "?").upper()
+        price = fmt_price(pair.get("priceUsd"))
+        chg_24h = (pair.get("priceChange") or {}).get("h24") or 0
+        chg_1h = (pair.get("priceChange") or {}).get("h1") or 0
+        vol = fmt_num((pair.get("volume") or {}).get("h24"))
+        liq = fmt_num((pair.get("liquidity") or {}).get("usd"))
+        chain = pair.get("chainId", "?").upper()
+        url = pair.get("url", "")
+        arrow = "📈" if chg_24h >= 0 else "📉"
+
+        lines.append(f"{medal} <b><a href='{url}'>{name} ({symbol})</a></b>  <code>[{chain}]</code>")
+        lines.append(f"   {arrow} <b>{chg_24h:+.1f}%</b> (24h)  |  {chg_1h:+.1f}% (1h)  |  {price}")
+        lines.append(f"   📊 Vol: {vol}  |  Liq: {liq}  |  Score: <b>{score['total']:.0f}/100</b>")
+        lines.append(f"   ✅ {reasons[0]}")
+        lines.append("")
+
+    lines += [
+        "─" * 28,
+        "⚠️ <b>Haftungsausschluss:</b> Memecoins sind extrem riskant.",
+        "Investiere nur, was du bereit bist zu verlieren.",
+    ]
+
+    msg = "\n".join(lines)
+    if len(msg) > TELEGRAM_MAX_CHARS:
+        msg = msg[:TELEGRAM_MAX_CHARS - 3] + "..."
+    return msg
+
+
+# ---------------------------------------------------------------------------
+# Markdown report
+# ---------------------------------------------------------------------------
+
+def generate_markdown_report(ranked: list[dict], run_at: datetime) -> str:
     date_str = run_at.strftime("%Y-%m-%d")
     time_str = run_at.strftime("%H:%M UTC")
 
-    lines: list[str] = []
+    lines = [
+        f"# Memecoin Scanner Report — {date_str}",
+        "",
+        f"> Generiert: {time_str}  |  Quelle: DexScreener Free API",
+        "",
+        "---",
+        "",
+        "## ⚠️ DISCLAIMER",
+        "",
+        "> **KEIN FINANZRAT.** Nur für Bildungs-/Informationszwecke. "
+        "Memecoins sind extrem riskant. Du könntest alles verlieren. DYOR.",
+        "",
+        "---",
+        "",
+        "## Bewertungskriterien",
+        "",
+        "| Kriterium | Max Pkt | Beschreibung |",
+        "|-----------|---------|--------------|",
+        "| Vol/Liq-Ratio | 30 | Vol > 5x Liquidität = extreme Aktivität |",
+        "| 24h Preis | 25 | Sweet Spot: +20% bis +500% |",
+        "| Trending/Boost | 20 | Aktiv auf DexScreener promotet |",
+        "| Liquiditäts-Bereich | 15 | $50K–$5M = Wachstumsphase |",
+        "| Kaufdruck | 10 | Mehr Käufe als Verkäufe |",
+        "| **Gesamt** | **100** | |",
+        "",
+        "---",
+        "",
+        f"## Top {len(ranked)} Memecoins",
+        "",
+        "| # | Name | Symbol | Chain | Preis | 24h% | 1h% | Vol (24h) | Liq | Score |",
+        "|---|------|--------|-------|-------|------|-----|-----------|-----|-------|",
+    ]
 
-    lines.append(f"# Memecoin Scanner Report — {date_str}")
-    lines.append("")
-    lines.append(f"> Generated at {time_str} via CoinGecko public API.")
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append("## ⚠️  DISCLAIMER")
-    lines.append("")
-    lines.append(
-        "> **THIS IS NOT FINANCIAL ADVICE.** This report is generated automatically "
-        "for **educational and informational purposes only**. Memecoins are extremely "
-        "high-risk, speculative assets. You could lose **all** of your investment. "
-        "Never invest more than you can afford to lose. Always do your own research "
-        "(DYOR) and consult a qualified financial advisor. The authors of this tool "
-        "accept no responsibility for any financial losses."
-    )
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append("## Scoring Methodology")
-    lines.append("")
-    lines.append("| Criterion | Max Points | Description |")
-    lines.append("|-----------|-----------|-------------|")
-    lines.append("| Volume/MCap Ratio | 30 | Vol > 30% of MCap = strong liquidity |")
-    lines.append("| 24h Price Change | 25 | Sweet spot: +20% to +200% |")
-    lines.append("| Trending Status | 20 | Coin trending on CoinGecko |")
-    lines.append("| Market Cap Range | 15 | $500K–$50M = explosive growth potential |")
-    lines.append("| 7d Momentum | 10 | Positive sustained trend |")
-    lines.append("| **Total** | **100** | |")
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append(f"## Top {len(ranked_coins)} Memecoins")
-    lines.append("")
-
-    # Table header
-    lines.append(
-        "| Rank | Name | Symbol | Price | 24h% | 7d% | MCap | Volume | Score | Why |"
-    )
-    lines.append("|------|------|--------|-------|------|-----|------|--------|-------|-----|")
-
-    for i, entry in enumerate(ranked_coins, start=1):
-        coin = entry["coin"]
+    for i, entry in enumerate(ranked, 1):
+        pair = entry["pair"]
         score = entry["score"]
-        reasons = entry["reasons"]
-
-        name = coin.get("name", "?")
-        symbol = (coin.get("symbol") or "?").upper()
-        price = format_price(coin.get("current_price"))
-        chg_24h = coin.get("price_change_percentage_24h")
-        chg_24h_str = f"{chg_24h:+.1f}%" if chg_24h is not None else "N/A"
-        chg_7d = coin.get("price_change_percentage_7d_in_currency")
-        chg_7d_str = f"{chg_7d:+.1f}%" if chg_7d is not None else "N/A"
-        mcap_str = format_large_number(coin.get("market_cap"))
-        vol_str = format_large_number(coin.get("total_volume"))
-        score_str = f"{score['total']:.1f}/100"
-        why = "; ".join(reasons[:2])  # Keep table compact
-
+        name = (pair.get("baseToken") or {}).get("name", "?")
+        symbol = (pair.get("baseToken") or {}).get("symbol", "?").upper()
+        chain = pair.get("chainId", "?")
+        price = fmt_price(pair.get("priceUsd"))
+        chg_24h = (pair.get("priceChange") or {}).get("h24") or 0
+        chg_1h = (pair.get("priceChange") or {}).get("h1") or 0
+        vol = fmt_num((pair.get("volume") or {}).get("h24"))
+        liq = fmt_num((pair.get("liquidity") or {}).get("usd"))
         lines.append(
-            f"| {i} | {name} | {symbol} | {price} | {chg_24h_str} | {chg_7d_str} "
-            f"| {mcap_str} | {vol_str} | {score_str} | {why} |"
+            f"| {i} | {name} | {symbol} | {chain} | {price} "
+            f"| {chg_24h:+.1f}% | {chg_1h:+.1f}% | {vol} | {liq} | {score['total']:.1f}/100 |"
         )
 
-    lines.append("")
-    lines.append("---")
-    lines.append("")
-    lines.append("## Detailed Breakdown")
-    lines.append("")
+    lines += ["", "---", ""]
 
-    for i, entry in enumerate(ranked_coins, start=1):
-        coin = entry["coin"]
+    for i, entry in enumerate(ranked, 1):
+        pair = entry["pair"]
         score = entry["score"]
         reasons = entry["reasons"]
         bd = score["breakdown"]
+        name = (pair.get("baseToken") or {}).get("name", "?")
+        symbol = (pair.get("baseToken") or {}).get("symbol", "?").upper()
+        url = pair.get("url", "")
+        chg_24h = (pair.get("priceChange") or {}).get("h24") or 0
+        chg_1h = (pair.get("priceChange") or {}).get("h1") or 0
+        h24_txns = (pair.get("txns") or {}).get("h24") or {}
 
-        name = coin.get("name", "?")
-        symbol = (coin.get("symbol") or "?").upper()
-        cg_url = f"https://www.coingecko.com/en/coins/{coin.get('id', '')}"
-
-        lines.append(f"### #{i} — {name} ({symbol})")
-        lines.append("")
-        lines.append(f"- **CoinGecko:** [{name}]({cg_url})")
-        lines.append(f"- **Price:** {format_price(coin.get('current_price'))}")
-        lines.append(f"- **Market Cap:** {format_large_number(coin.get('market_cap'))}")
-        lines.append(f"- **24h Volume:** {format_large_number(coin.get('total_volume'))}")
-        lines.append(
-            f"- **Price Change:** 24h={coin.get('price_change_percentage_24h', 'N/A'):.1f}%"
-            if coin.get("price_change_percentage_24h") is not None
-            else "- **Price Change:** 24h=N/A"
-        )
-        lines.append(f"- **Total Score:** **{score['total']:.1f} / 100**")
-        lines.append("")
-        lines.append("  | Component | Score |")
-        lines.append("  |-----------|-------|")
-        lines.append(f"  | Volume/MCap Ratio | {bd['volume_mcap']:.1f} / 30 |")
-        lines.append(f"  | 24h Price Change | {bd['price_24h']:.1f} / 25 |")
-        lines.append(f"  | Trending Status | {bd['trending']:.1f} / 20 |")
-        lines.append(f"  | Market Cap Range | {bd['market_cap']:.1f} / 15 |")
-        lines.append(f"  | 7d Momentum | {bd['momentum_7d']:.1f} / 10 |")
-        lines.append("")
-        lines.append("  **Why this coin:**")
-        for reason in reasons:
-            lines.append(f"  - {reason}")
+        lines += [
+            f"### #{i} — {name} ({symbol})",
+            "",
+            f"- **DEX:** [{pair.get('dexId', '?')} / {pair.get('chainId', '?')}]({url})",
+            f"- **Preis:** {fmt_price(pair.get('priceUsd'))}",
+            f"- **24h:** {chg_24h:+.1f}%  |  **1h:** {chg_1h:+.1f}%",
+            f"- **24h Vol:** {fmt_num((pair.get('volume') or {}).get('h24'))}",
+            f"- **Liquidität:** {fmt_num((pair.get('liquidity') or {}).get('usd'))}",
+            f"- **Käufe/Verkäufe (24h):** {h24_txns.get('buys',0)} / {h24_txns.get('sells',0)}",
+            f"- **Score:** **{score['total']:.1f} / 100**",
+            "",
+            "  | Komponente | Punkte |",
+            "  |-----------|--------|",
+            f"  | Vol/Liq-Ratio | {bd['vol_liq_ratio']:.1f} / 30 |",
+            f"  | 24h Preis | {bd['price_24h']:.1f} / 25 |",
+            f"  | Trending | {bd['trending']:.1f} / 20 |",
+            f"  | Liquidität | {bd['liquidity_range']:.1f} / 15 |",
+            f"  | Kaufdruck | {bd['buy_pressure']:.1f} / 10 |",
+            "",
+            "  **Signale:**",
+        ]
+        for r in reasons:
+            lines.append(f"  - {r}")
         lines.append("")
 
-    lines.append("---")
-    lines.append("")
-    lines.append(
-        "*Report generated by [memecoin_scanner.py](../memecoin_scanner.py). "
-        "Data sourced from [CoinGecko](https://www.coingecko.com) free public API.*"
-    )
-    lines.append("")
-
+    lines += [
+        "---",
+        "",
+        "*Daten: [DexScreener](https://dexscreener.com) Free API  "
+        "|  Tool: [memecoin_scanner.py](../memecoin_scanner.py)*",
+        "",
+    ]
     return "\n".join(lines)
 
 
@@ -458,122 +402,127 @@ def generate_markdown_report(
 # ---------------------------------------------------------------------------
 
 def run_scanner() -> int:
-    """Run the full scanner pipeline. Returns 0 on success, 1 on fatal error."""
     run_at = datetime.now(timezone.utc)
     date_str = run_at.strftime("%Y-%m-%d")
+    log.info("=== Memecoin Scanner v2 — %s ===", date_str)
 
-    log.info("=== Memecoin Scanner starting — %s ===", date_str)
+    # 1. Collect token candidates from DexScreener
+    top_boosted = get_boosted_tokens()
+    latest_boosted = get_latest_boosted_tokens()
 
-    # --- Fetch data ---
-    trending_ids = get_trending_ids()
-    coins_by_volume = get_meme_coins_by_volume()
-    coins_by_change = get_meme_coins_by_change()
+    # Deduplicate by address
+    seen_addresses: set[str] = set()
+    all_tokens: list[dict] = []
+    for t in top_boosted + latest_boosted:
+        addr = (t.get("tokenAddress") or "").lower()
+        if addr and addr not in seen_addresses:
+            seen_addresses.add(addr)
+            all_tokens.append(t)
 
-    if not coins_by_volume and not coins_by_change:
-        log.error("No coin data retrieved. Aborting.")
+    boosted_addresses = {(t.get("tokenAddress") or "").lower() for t in top_boosted}
+
+    if not all_tokens:
+        log.error("No token candidates retrieved. Aborting.")
         return 1
 
-    all_coins = merge_coin_lists(coins_by_volume, coins_by_change)
+    log.info("Processing %d unique token candidates.", len(all_tokens))
 
-    # --- Score ---
-    scored: list[dict] = []
-    for coin in all_coins:
-        score = compute_score(coin, trending_ids)
-        reasons = build_reasons(coin, score, trending_ids)
-        scored.append({"coin": coin, "score": score, "reasons": reasons})
+    # 2. Fetch pair data and score
+    all_entries: list[dict] = []
+    seen_pairs: set[str] = set()
 
-    # Sort descending by total score, then by 24h change as tiebreaker
-    scored.sort(
-        key=lambda x: (
-            x["score"]["total"],
-            x["coin"].get("price_change_percentage_24h") or 0,
-        ),
-        reverse=True,
-    )
+    for token in all_tokens[:35]:  # cap API calls
+        addr = (token.get("tokenAddress") or "").lower()
+        if not addr:
+            continue
 
-    top_coins = scored[:TOP_N]
+        pairs = get_pair_data(addr)
+        best = select_best_pair(pairs)
+        if not best:
+            continue
 
-    if not top_coins:
-        log.warning("No coins passed scoring. Report will be empty.")
+        pair_key = best.get("pairAddress", "")
+        if pair_key in seen_pairs:
+            continue
+        seen_pairs.add(pair_key)
 
-    # --- Write reports ---
+        vol_24h = (best.get("volume") or {}).get("h24", 0) or 0
+        if vol_24h < 5_000:  # skip ghost tokens
+            continue
+
+        is_boosted = addr in boosted_addresses
+        score = score_coin(best, is_boosted)
+        reasons = build_reasons(best, score, is_boosted)
+        all_entries.append({"pair": best, "score": score, "reasons": reasons})
+
+    if not all_entries:
+        log.error("No coins passed minimum volume filter.")
+        return 1
+
+    all_entries.sort(key=lambda x: x["score"]["total"], reverse=True)
+    top = all_entries[:TOP_N]
+    log.info("Top %d selected (highest score: %.1f).", len(top), top[0]["score"]["total"])
+
+    # 3. Write reports
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    # JSON report
-    json_path = REPORTS_DIR / f"{date_str}.json"
+    md_content = generate_markdown_report(top, run_at)
+    tg_content = generate_telegram_message(top, run_at)
     json_payload = {
         "generated_at": run_at.isoformat(),
-        "disclaimer": (
-            "NOT FINANCIAL ADVICE. For educational purposes only. "
-            "Memecoins are extremely high-risk. Do your own research."
-        ),
-        "scoring_weights": SCORE_WEIGHTS,
+        "disclaimer": "NOT FINANCIAL ADVICE. Educational purposes only. DYOR.",
+        "data_source": "DexScreener Free API",
         "top_coins": [
             {
                 "rank": i + 1,
-                "id": e["coin"].get("id"),
-                "name": e["coin"].get("name"),
-                "symbol": (e["coin"].get("symbol") or "").upper(),
-                "current_price": e["coin"].get("current_price"),
-                "market_cap": e["coin"].get("market_cap"),
-                "total_volume": e["coin"].get("total_volume"),
-                "price_change_24h": e["coin"].get("price_change_percentage_24h"),
-                "price_change_7d": e["coin"].get("price_change_percentage_7d_in_currency"),
+                "name": (e["pair"].get("baseToken") or {}).get("name"),
+                "symbol": (e["pair"].get("baseToken") or {}).get("symbol", "").upper(),
+                "chain": e["pair"].get("chainId"),
+                "dex": e["pair"].get("dexId"),
+                "price_usd": e["pair"].get("priceUsd"),
+                "price_change_24h": (e["pair"].get("priceChange") or {}).get("h24"),
+                "price_change_1h": (e["pair"].get("priceChange") or {}).get("h1"),
+                "volume_24h_usd": (e["pair"].get("volume") or {}).get("h24"),
+                "liquidity_usd": (e["pair"].get("liquidity") or {}).get("usd"),
+                "pair_url": e["pair"].get("url"),
                 "score": e["score"],
                 "reasons": e["reasons"],
-                "is_trending": e["coin"].get("id") in trending_ids,
             }
-            for i, e in enumerate(top_coins)
+            for i, e in enumerate(top)
         ],
     }
-    json_path.write_text(json.dumps(json_payload, indent=2), encoding="utf-8")
-    log.info("JSON report saved: %s", json_path)
+    json_str = json.dumps(json_payload, indent=2)
 
-    # Markdown report
-    md_path = REPORTS_DIR / f"{date_str}.md"
-    md_content = generate_markdown_report(top_coins, run_at, md_path)
-    md_path.write_text(md_content, encoding="utf-8")
-    log.info("Markdown report saved: %s", md_path)
+    for fname, content in [
+        (f"{date_str}.md", md_content),
+        ("latest.md", md_content),
+        (f"{date_str}.json", json_str),
+        ("latest.json", json_str),
+        ("telegram_message.txt", tg_content),
+    ]:
+        (REPORTS_DIR / fname).write_text(content, encoding="utf-8")
+        log.info("Saved: reports/%s", fname)
 
-    # Latest symlink-style copy for easy access
-    latest_md = REPORTS_DIR / "latest.md"
-    latest_md.write_text(md_content, encoding="utf-8")
-    latest_json = REPORTS_DIR / "latest.json"
-    latest_json.write_text(json.dumps(json_payload, indent=2), encoding="utf-8")
-
-    # --- Print summary to stdout ---
+    # 4. Print console summary
     print()
-    print("=" * 60)
-    print(f"  MEMECOIN SCANNER REPORT — {date_str}")
-    print("=" * 60)
+    print("=" * 65)
+    print(f"  MEMECOIN SCANNER — {date_str}  |  {run_at.strftime('%H:%M UTC')}")
+    print("=" * 65)
+    print("  ⚠️  KEIN FINANZRAT — nur zur Information\n")
+    print(f"  {'#':<3} {'Name':<22} {'Chain':<9} {'24h%':>7}  {'Score':>7}")
+    print(f"  {'-'*3} {'-'*22} {'-'*9} {'-'*7}  {'-'*7}")
+    for i, e in enumerate(top, 1):
+        pair = e["pair"]
+        name = (pair.get("baseToken") or {}).get("name", "?")[:22]
+        chain = pair.get("chainId", "?")[:9]
+        chg = (pair.get("priceChange") or {}).get("h24") or 0
+        print(f"  {i:<3} {name:<22} {chain:<9} {chg:>+6.1f}%  {e['score']['total']:>6.1f}/100")
     print()
-    print(
-        "  ⚠️  DISCLAIMER: NOT FINANCIAL ADVICE. Educational use only.\n"
-        "     Memecoins are extremely high-risk. DYOR.\n"
-    )
-    print(f"  {'Rank':<5} {'Name':<22} {'Symbol':<8} {'Score':>7}  {'24h%':>8}  Why")
-    print(f"  {'-'*5} {'-'*22} {'-'*8} {'-'*7}  {'-'*8}  {'-'*30}")
-
-    for entry in top_coins:
-        coin = entry["coin"]
-        score = entry["score"]
-        reasons = entry["reasons"]
-        rank = [i + 1 for i, e in enumerate(top_coins) if e is entry][0]
-        chg = coin.get("price_change_percentage_24h")
-        chg_str = f"{chg:+.1f}%" if chg is not None else "N/A"
-        why_short = reasons[0] if reasons else ""
-        print(
-            f"  {rank:<5} {coin.get('name', '?'):<22} "
-            f"{(coin.get('symbol') or '').upper():<8} "
-            f"{score['total']:>6.1f}  {chg_str:>8}  {why_short}"
-        )
-
-    print()
-    print(f"  Reports saved to: {REPORTS_DIR}")
-    print("=" * 60)
+    print(f"  Reports gespeichert: {REPORTS_DIR}")
+    print("=" * 65)
     print()
 
-    log.info("=== Scanner finished successfully ===")
+    log.info("=== Scanner erfolgreich abgeschlossen ===")
     return 0
 
 
