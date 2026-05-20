@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """
-Memecoin Scanner v2 — Daily report using DexScreener's free public API.
-
-DISCLAIMER: This tool is for informational and educational purposes ONLY.
-It does NOT constitute financial advice. Memecoins are extremely high-risk.
-You could lose ALL of your investment. DYOR. Consult a financial advisor.
+Memecoin Scanner v2 - DexScreener Free API.
+DISCLAIMER: NOT financial advice. Educational purposes only. DYOR.
 """
 
 import json
@@ -18,20 +15,12 @@ from typing import Optional
 
 import requests
 
-# ---------------------------------------------------------------------------
-# Config
-# ---------------------------------------------------------------------------
-
 DEXSCREENER_BASE = "https://api.dexscreener.com"
 REPORTS_DIR = Path(__file__).parent / "reports"
 TOP_N = 10
 RETRY_COUNT = 3
-API_SLEEP = 1.2  # seconds between calls to respect rate limits
-
-# Focus on the most active memecoin chains
+API_SLEEP = 1.2
 ALLOWED_CHAINS = {"solana", "ethereum", "bsc", "base", "avalanche"}
-
-# Max Telegram message length
 TELEGRAM_MAX_CHARS = 4000
 
 logging.basicConfig(
@@ -42,64 +31,44 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------------------
-# HTTP helper
-# ---------------------------------------------------------------------------
-
-def fetch_json(url: str, retries: int = RETRY_COUNT) -> Optional[dict | list]:
+def fetch_json(url: str, retries: int = RETRY_COUNT):
     headers = {"Accept": "application/json", "User-Agent": "memecoin-scanner/2.0"}
     for attempt in range(1, retries + 1):
         try:
-            log.info("GET %s (attempt %d/%d)", url, attempt, retries)
+            log.info("GET %s", url)
             resp = requests.get(url, headers=headers, timeout=20)
             if resp.status_code == 429:
-                wait = 2 ** attempt
-                log.warning("Rate-limited (429). Sleeping %ss.", wait)
-                time.sleep(wait)
+                time.sleep(2 ** attempt)
                 continue
             resp.raise_for_status()
             return resp.json()
-        except requests.exceptions.HTTPError as exc:
-            log.error("HTTP %s: %s", resp.status_code, exc)
+        except requests.exceptions.HTTPError:
             if resp.status_code < 500:
                 return None
         except Exception as exc:
             log.error("Error: %s", exc)
         if attempt < retries:
             time.sleep(2 ** attempt)
-    log.error("All %d attempts failed: %s", retries, url)
     return None
 
 
-# ---------------------------------------------------------------------------
-# DexScreener data fetching
-# ---------------------------------------------------------------------------
-
-def get_boosted_tokens() -> list[dict]:
-    """Top boosted/promoted tokens — strong proxy for trending memecoins."""
+def get_boosted_tokens():
     data = fetch_json(f"{DEXSCREENER_BASE}/token-boosts/top/v1")
     time.sleep(API_SLEEP)
     if not isinstance(data, list):
-        log.warning("No boosted token data returned.")
         return []
-    filtered = [t for t in data if t.get("chainId") in ALLOWED_CHAINS]
-    log.info("Boosted tokens on allowed chains: %d", len(filtered))
-    return filtered[:30]
+    return [t for t in data if t.get("chainId") in ALLOWED_CHAINS][:30]
 
 
-def get_latest_boosted_tokens() -> list[dict]:
-    """Most recently boosted tokens — catches early movers."""
+def get_latest_boosted_tokens():
     data = fetch_json(f"{DEXSCREENER_BASE}/token-boosts/latest/v1")
     time.sleep(API_SLEEP)
     if not isinstance(data, list):
         return []
-    filtered = [t for t in data if t.get("chainId") in ALLOWED_CHAINS]
-    log.info("Latest boosted tokens on allowed chains: %d", len(filtered))
-    return filtered[:20]
+    return [t for t in data if t.get("chainId") in ALLOWED_CHAINS][:20]
 
 
-def get_pair_data(token_address: str) -> list[dict]:
-    """All trading pairs for a given token address."""
+def get_pair_data(token_address: str):
     data = fetch_json(f"{DEXSCREENER_BASE}/latest/dex/tokens/{token_address}")
     time.sleep(API_SLEEP)
     if not data or "pairs" not in data:
@@ -107,8 +76,7 @@ def get_pair_data(token_address: str) -> list[dict]:
     return data["pairs"] or []
 
 
-def select_best_pair(pairs: list[dict]) -> Optional[dict]:
-    """Pick the pair with the highest 24h volume on an allowed chain."""
+def select_best_pair(pairs):
     valid = [
         p for p in pairs
         if p.get("chainId") in ALLOWED_CHAINS
@@ -120,96 +88,71 @@ def select_best_pair(pairs: list[dict]) -> Optional[dict]:
     return max(valid, key=lambda p: (p.get("volume") or {}).get("h24", 0))
 
 
-# ---------------------------------------------------------------------------
-# Scoring (max 100 points)
-# ---------------------------------------------------------------------------
-
-def score_coin(pair: dict, is_boosted: bool) -> dict:
-    vol_24h = (pair.get("volume") or {}).get("h24", 0) or 0
+def score_coin(pair, is_boosted):
+    vol = (pair.get("volume") or {}).get("h24", 0) or 0
     liq = (pair.get("liquidity") or {}).get("usd", 0) or 0
-    chg_24h = (pair.get("priceChange") or {}).get("h24", 0) or 0
-    chg_1h = (pair.get("priceChange") or {}).get("h1", 0) or 0
-    h24_txns = (pair.get("txns") or {}).get("h24") or {}
-    buys = h24_txns.get("buys", 0) or 0
-    sells = h24_txns.get("sells", 1) or 1
+    chg = (pair.get("priceChange") or {}).get("h24", 0) or 0
+    txns = (pair.get("txns") or {}).get("h24") or {}
+    buys = txns.get("buys", 0) or 0
+    sells = txns.get("sells", 1) or 1
 
-    # 1. Vol / Liquidity ratio (30 pts) — high ratio = intense trading activity
-    vol_liq_score = 0.0
+    s_vol = 0.0
     if liq > 0:
-        ratio = vol_24h / liq
-        if ratio >= 5:
-            vol_liq_score = 30.0
-        elif ratio >= 1:
-            vol_liq_score = round((ratio - 1) / 4 * 30, 2)
+        r = vol / liq
+        s_vol = 30.0 if r >= 5 else round((r - 1) / 4 * 30, 2) if r >= 1 else 0.0
 
-    # 2. 24h price change (25 pts) — sweet spot +20% to +500%
-    chg_score = 0.0
-    if 20 <= chg_24h <= 500:
-        chg_score = 25.0
-    elif 10 <= chg_24h < 20:
-        chg_score = round((chg_24h - 10) / 10 * 25, 2)
-    elif 500 < chg_24h <= 2000:
-        chg_score = round(max(0.0, 1 - (chg_24h - 500) / 1500) * 25, 2)
+    s_chg = 0.0
+    if 20 <= chg <= 500:
+        s_chg = 25.0
+    elif 10 <= chg < 20:
+        s_chg = round((chg - 10) / 10 * 25, 2)
+    elif 500 < chg <= 2000:
+        s_chg = round(max(0.0, 1 - (chg - 500) / 1500) * 25, 2)
 
-    # 3. Trending / boosted status (20 pts)
-    boost_score = 20.0 if is_boosted else 0.0
+    s_boost = 20.0 if is_boosted else 0.0
 
-    # 4. Liquidity range (15 pts) — sweet spot $50K–$5M (room to grow)
-    liq_score = 0.0
+    s_liq = 0.0
     if 50_000 <= liq <= 5_000_000:
-        liq_score = 15.0
+        s_liq = 15.0
     elif 10_000 <= liq < 50_000:
-        liq_score = round((liq - 10_000) / 40_000 * 15, 2)
+        s_liq = round((liq - 10_000) / 40_000 * 15, 2)
     elif 5_000_000 < liq <= 50_000_000:
-        liq_score = round(max(0.0, 1 - (liq - 5_000_000) / 45_000_000) * 15, 2)
+        s_liq = round(max(0.0, 1 - (liq - 5_000_000) / 45_000_000) * 15, 2)
 
-    # 5. Buy pressure (10 pts) — more buys than sells = bullish
-    total_txns = buys + sells
-    buy_ratio = buys / total_txns if total_txns > 0 else 0.5
-    buy_score = round(buy_ratio * 10, 2) if buy_ratio > 0.5 else 0.0
+    total_t = buys + sells
+    buy_ratio = buys / total_t if total_t > 0 else 0.5
+    s_buy = round(buy_ratio * 10, 2) if buy_ratio > 0.5 else 0.0
 
-    total = round(vol_liq_score + chg_score + boost_score + liq_score + buy_score, 2)
-    return {
-        "total": total,
-        "breakdown": {
-            "vol_liq_ratio": vol_liq_score,
-            "price_24h": chg_score,
-            "trending": boost_score,
-            "liquidity_range": liq_score,
-            "buy_pressure": buy_score,
-        },
-    }
+    total = round(s_vol + s_chg + s_boost + s_liq + s_buy, 2)
+    return {"total": total, "breakdown": {
+        "vol_liq": s_vol, "price_24h": s_chg,
+        "trending": s_boost, "liquidity": s_liq, "buy_pressure": s_buy
+    }}
 
 
-def build_reasons(pair: dict, score: dict, is_boosted: bool) -> list[str]:
-    reasons: list[str] = []
+def build_reasons(pair, score, is_boosted):
+    reasons = []
     bd = score["breakdown"]
-    vol_24h = (pair.get("volume") or {}).get("h24", 0) or 0
+    vol = (pair.get("volume") or {}).get("h24", 0) or 0
     liq = (pair.get("liquidity") or {}).get("usd", 0) or 0
-    chg_24h = (pair.get("priceChange") or {}).get("h24", 0) or 0
-    h24_txns = (pair.get("txns") or {}).get("h24") or {}
-    buys = h24_txns.get("buys", 0) or 0
-    sells = h24_txns.get("sells", 0) or 0
-
-    if bd["vol_liq_ratio"] > 0 and liq > 0:
-        reasons.append(f"Vol/Liq={vol_24h/liq:.1f}x (extreme trading activity)")
+    chg = (pair.get("priceChange") or {}).get("h24", 0) or 0
+    txns = (pair.get("txns") or {}).get("h24") or {}
+    buys = txns.get("buys", 0) or 0
+    sells = txns.get("sells", 0) or 0
+    if bd["vol_liq"] > 0 and liq > 0:
+        reasons.append(f"Vol/Liq={vol/liq:.1f}x")
     if bd["price_24h"] > 0:
-        reasons.append(f"+{chg_24h:.1f}% in 24h (starke Momentum-Phase)")
+        reasons.append(f"+{chg:.1f}% in 24h")
     if bd["trending"] > 0:
-        reasons.append("Trending & promoted auf DexScreener")
-    if bd["liquidity_range"] > 0:
-        reasons.append(f"Liquidität ${liq:,.0f} (ideale Wachstumsphase)")
+        reasons.append("Trending auf DexScreener")
+    if bd["liquidity"] > 0:
+        reasons.append(f"Liq ${liq:,.0f}")
     if bd["buy_pressure"] > 0 and (buys + sells) > 0:
-        pct = buys / (buys + sells) * 100
-        reasons.append(f"{pct:.0f}% Kaufdruck ({buys} Käufe vs {sells} Verkäufe)")
-    return reasons or ["Kein starkes Signal erkannt"]
+        reasons.append(f"{buys/(buys+sells)*100:.0f}% Kaufdruck")
+    return reasons or ["Kein starkes Signal"]
 
 
-# ---------------------------------------------------------------------------
-# Formatting helpers
-# ---------------------------------------------------------------------------
-
-def fmt_price(p) -> str:
+def fmt_price(p):
     try:
         p = float(p)
     except (TypeError, ValueError):
@@ -223,7 +166,7 @@ def fmt_price(p) -> str:
     return f"${p:.2f}"
 
 
-def fmt_num(n) -> str:
+def fmt_num(n):
     try:
         n = float(n)
     except (TypeError, ValueError):
@@ -237,292 +180,164 @@ def fmt_num(n) -> str:
     return f"${n:.0f}"
 
 
-# ---------------------------------------------------------------------------
-# Telegram message
-# ---------------------------------------------------------------------------
-
-def generate_telegram_message(ranked: list[dict], run_at: datetime) -> str:
-    date_str = run_at.strftime("%Y-%m-%d")
-    time_str = run_at.strftime("%H:%M UTC")
-    medals = ["🥇", "🥈", "🥉"] + ["🔹"] * 20
-
+def build_telegram_message(ranked, run_at):
+    medals = ["\U0001f947", "\U0001f948", "\U0001f949"] + ["\U0001f539"] * 20
     lines = [
-        f"🚀 <b>Memecoin Scanner — {date_str}</b>",
-        f"🕗 {time_str}  |  Quelle: DexScreener",
+        f"\U0001f680 <b>Memecoin Scanner - {run_at.strftime('%Y-%m-%d')}</b>",
+        f"\U0001f557 {run_at.strftime('%H:%M UTC')} | DexScreener",
         "",
         "⚠️ <i>Kein Finanzrat. Nur zur Info. DYOR!</i>",
         "",
-        f"🏆 <b>TOP {len(ranked)} MEMECOINS</b>",
+        f"\U0001f3c6 <b>TOP {len(ranked)} MEMECOINS</b>",
         "",
     ]
-
     for i, entry in enumerate(ranked):
         pair = entry["pair"]
         score = entry["score"]
         reasons = entry["reasons"]
-        medal = medals[i] if i < len(medals) else "🔹"
-
         name = (pair.get("baseToken") or {}).get("name", "?")
         symbol = (pair.get("baseToken") or {}).get("symbol", "?").upper()
         price = fmt_price(pair.get("priceUsd"))
-        chg_24h = (pair.get("priceChange") or {}).get("h24") or 0
-        chg_1h = (pair.get("priceChange") or {}).get("h1") or 0
+        chg24 = (pair.get("priceChange") or {}).get("h24") or 0
+        chg1 = (pair.get("priceChange") or {}).get("h1") or 0
         vol = fmt_num((pair.get("volume") or {}).get("h24"))
         liq = fmt_num((pair.get("liquidity") or {}).get("usd"))
         chain = pair.get("chainId", "?").upper()
         url = pair.get("url", "")
-        arrow = "📈" if chg_24h >= 0 else "📉"
-
-        lines.append(f"{medal} <b><a href='{url}'>{name} ({symbol})</a></b>  <code>[{chain}]</code>")
-        lines.append(f"   {arrow} <b>{chg_24h:+.1f}%</b> (24h)  |  {chg_1h:+.1f}% (1h)  |  {price}")
-        lines.append(f"   📊 Vol: {vol}  |  Liq: {liq}  |  Score: <b>{score['total']:.0f}/100</b>")
+        arrow = "\U0001f4c8" if chg24 >= 0 else "\U0001f4c9"
+        medal = medals[i] if i < len(medals) else "\U0001f539"
+        lines.append(f"{medal} <b><a href='{url}'>{name} ({symbol})</a></b> <code>[{chain}]</code>")
+        lines.append(f"   {arrow} <b>{chg24:+.1f}%</b> (24h) | {chg1:+.1f}% (1h) | {price}")
+        lines.append(f"   \U0001f4ca Vol: {vol} | Liq: {liq} | Score: <b>{score['total']:.0f}/100</b>")
         lines.append(f"   ✅ {reasons[0]}")
         lines.append("")
-
     lines += [
-        "─" * 28,
-        "⚠️ <b>Haftungsausschluss:</b> Memecoins sind extrem riskant.",
-        "Investiere nur, was du bereit bist zu verlieren.",
+        "─" * 25,
+        "⚠️ Memecoins sind extrem riskant. DYOR!",
     ]
-
     msg = "\n".join(lines)
-    if len(msg) > TELEGRAM_MAX_CHARS:
-        msg = msg[:TELEGRAM_MAX_CHARS - 3] + "..."
-    return msg
+    return msg[:TELEGRAM_MAX_CHARS] if len(msg) > TELEGRAM_MAX_CHARS else msg
 
 
-# ---------------------------------------------------------------------------
-# Markdown report
-# ---------------------------------------------------------------------------
-
-def generate_markdown_report(ranked: list[dict], run_at: datetime) -> str:
-    date_str = run_at.strftime("%Y-%m-%d")
-    time_str = run_at.strftime("%H:%M UTC")
-
-    lines = [
-        f"# Memecoin Scanner Report — {date_str}",
-        "",
-        f"> Generiert: {time_str}  |  Quelle: DexScreener Free API",
-        "",
-        "---",
-        "",
-        "## ⚠️ DISCLAIMER",
-        "",
-        "> **KEIN FINANZRAT.** Nur für Bildungs-/Informationszwecke. "
-        "Memecoins sind extrem riskant. Du könntest alles verlieren. DYOR.",
-        "",
-        "---",
-        "",
-        "## Bewertungskriterien",
-        "",
-        "| Kriterium | Max Pkt | Beschreibung |",
-        "|-----------|---------|--------------|",
-        "| Vol/Liq-Ratio | 30 | Vol > 5x Liquidität = extreme Aktivität |",
-        "| 24h Preis | 25 | Sweet Spot: +20% bis +500% |",
-        "| Trending/Boost | 20 | Aktiv auf DexScreener promotet |",
-        "| Liquiditäts-Bereich | 15 | $50K–$5M = Wachstumsphase |",
-        "| Kaufdruck | 10 | Mehr Käufe als Verkäufe |",
-        "| **Gesamt** | **100** | |",
-        "",
-        "---",
-        "",
-        f"## Top {len(ranked)} Memecoins",
-        "",
-        "| # | Name | Symbol | Chain | Preis | 24h% | 1h% | Vol (24h) | Liq | Score |",
-        "|---|------|--------|-------|-------|------|-----|-----------|-----|-------|",
-    ]
-
-    for i, entry in enumerate(ranked, 1):
-        pair = entry["pair"]
-        score = entry["score"]
-        name = (pair.get("baseToken") or {}).get("name", "?")
-        symbol = (pair.get("baseToken") or {}).get("symbol", "?").upper()
-        chain = pair.get("chainId", "?")
-        price = fmt_price(pair.get("priceUsd"))
-        chg_24h = (pair.get("priceChange") or {}).get("h24") or 0
-        chg_1h = (pair.get("priceChange") or {}).get("h1") or 0
-        vol = fmt_num((pair.get("volume") or {}).get("h24"))
-        liq = fmt_num((pair.get("liquidity") or {}).get("usd"))
-        lines.append(
-            f"| {i} | {name} | {symbol} | {chain} | {price} "
-            f"| {chg_24h:+.1f}% | {chg_1h:+.1f}% | {vol} | {liq} | {score['total']:.1f}/100 |"
+def send_telegram(message):
+    token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        log.info("Telegram not configured, skipping.")
+        return
+    try:
+        resp = requests.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={
+                "chat_id": chat_id,
+                "text": message,
+                "parse_mode": "HTML",
+                "disable_web_page_preview": False,
+            },
+            timeout=30,
         )
-
-    lines += ["", "---", ""]
-
-    for i, entry in enumerate(ranked, 1):
-        pair = entry["pair"]
-        score = entry["score"]
-        reasons = entry["reasons"]
-        bd = score["breakdown"]
-        name = (pair.get("baseToken") or {}).get("name", "?")
-        symbol = (pair.get("baseToken") or {}).get("symbol", "?").upper()
-        url = pair.get("url", "")
-        chg_24h = (pair.get("priceChange") or {}).get("h24") or 0
-        chg_1h = (pair.get("priceChange") or {}).get("h1") or 0
-        h24_txns = (pair.get("txns") or {}).get("h24") or {}
-
-        lines += [
-            f"### #{i} — {name} ({symbol})",
-            "",
-            f"- **DEX:** [{pair.get('dexId', '?')} / {pair.get('chainId', '?')}]({url})",
-            f"- **Preis:** {fmt_price(pair.get('priceUsd'))}",
-            f"- **24h:** {chg_24h:+.1f}%  |  **1h:** {chg_1h:+.1f}%",
-            f"- **24h Vol:** {fmt_num((pair.get('volume') or {}).get('h24'))}",
-            f"- **Liquidität:** {fmt_num((pair.get('liquidity') or {}).get('usd'))}",
-            f"- **Käufe/Verkäufe (24h):** {h24_txns.get('buys',0)} / {h24_txns.get('sells',0)}",
-            f"- **Score:** **{score['total']:.1f} / 100**",
-            "",
-            "  | Komponente | Punkte |",
-            "  |-----------|--------|",
-            f"  | Vol/Liq-Ratio | {bd['vol_liq_ratio']:.1f} / 30 |",
-            f"  | 24h Preis | {bd['price_24h']:.1f} / 25 |",
-            f"  | Trending | {bd['trending']:.1f} / 20 |",
-            f"  | Liquidität | {bd['liquidity_range']:.1f} / 15 |",
-            f"  | Kaufdruck | {bd['buy_pressure']:.1f} / 10 |",
-            "",
-            "  **Signale:**",
-        ]
-        for r in reasons:
-            lines.append(f"  - {r}")
-        lines.append("")
-
-    lines += [
-        "---",
-        "",
-        "*Daten: [DexScreener](https://dexscreener.com) Free API  "
-        "|  Tool: [memecoin_scanner.py](../memecoin_scanner.py)*",
-        "",
-    ]
-    return "\n".join(lines)
+        resp.raise_for_status()
+        log.info("Telegram-Nachricht erfolgreich gesendet.")
+    except Exception as exc:
+        log.error("Telegram-Fehler: %s", exc)
 
 
-# ---------------------------------------------------------------------------
-# Main pipeline
-# ---------------------------------------------------------------------------
-
-def run_scanner() -> int:
+def run_scanner():
     run_at = datetime.now(timezone.utc)
     date_str = run_at.strftime("%Y-%m-%d")
-    log.info("=== Memecoin Scanner v2 — %s ===", date_str)
+    log.info("=== Memecoin Scanner v2 - %s ===", date_str)
 
-    # 1. Collect token candidates from DexScreener
     top_boosted = get_boosted_tokens()
     latest_boosted = get_latest_boosted_tokens()
-
-    # Deduplicate by address
-    seen_addresses: set[str] = set()
-    all_tokens: list[dict] = []
-    for t in top_boosted + latest_boosted:
-        addr = (t.get("tokenAddress") or "").lower()
-        if addr and addr not in seen_addresses:
-            seen_addresses.add(addr)
-            all_tokens.append(t)
-
     boosted_addresses = {(t.get("tokenAddress") or "").lower() for t in top_boosted}
 
+    seen_addr: set = set()
+    all_tokens = []
+    for t in top_boosted + latest_boosted:
+        addr = (t.get("tokenAddress") or "").lower()
+        if addr and addr not in seen_addr:
+            seen_addr.add(addr)
+            all_tokens.append(t)
+
     if not all_tokens:
-        log.error("No token candidates retrieved. Aborting.")
+        log.error("Keine Token-Daten. Abbruch.")
         return 1
 
-    log.info("Processing %d unique token candidates.", len(all_tokens))
-
-    # 2. Fetch pair data and score
-    all_entries: list[dict] = []
-    seen_pairs: set[str] = set()
-
-    for token in all_tokens[:35]:  # cap API calls
+    all_entries = []
+    seen_pairs: set = set()
+    for token in all_tokens[:35]:
         addr = (token.get("tokenAddress") or "").lower()
         if not addr:
             continue
-
         pairs = get_pair_data(addr)
         best = select_best_pair(pairs)
         if not best:
             continue
-
-        pair_key = best.get("pairAddress", "")
-        if pair_key in seen_pairs:
+        pk = best.get("pairAddress", "")
+        if pk in seen_pairs:
             continue
-        seen_pairs.add(pair_key)
-
-        vol_24h = (best.get("volume") or {}).get("h24", 0) or 0
-        if vol_24h < 5_000:  # skip ghost tokens
+        seen_pairs.add(pk)
+        if ((best.get("volume") or {}).get("h24", 0) or 0) < 5_000:
             continue
-
         is_boosted = addr in boosted_addresses
         score = score_coin(best, is_boosted)
         reasons = build_reasons(best, score, is_boosted)
         all_entries.append({"pair": best, "score": score, "reasons": reasons})
 
     if not all_entries:
-        log.error("No coins passed minimum volume filter.")
+        log.error("Keine Coins mit ausreichend Volumen.")
         return 1
 
     all_entries.sort(key=lambda x: x["score"]["total"], reverse=True)
     top = all_entries[:TOP_N]
-    log.info("Top %d selected (highest score: %.1f).", len(top), top[0]["score"]["total"])
 
-    # 3. Write reports
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    md_content = generate_markdown_report(top, run_at)
-    tg_content = generate_telegram_message(top, run_at)
-    json_payload = {
+    tg_msg = build_telegram_message(top, run_at)
+
+    json_data = {
         "generated_at": run_at.isoformat(),
-        "disclaimer": "NOT FINANCIAL ADVICE. Educational purposes only. DYOR.",
-        "data_source": "DexScreener Free API",
+        "disclaimer": "NOT FINANCIAL ADVICE. DYOR.",
         "top_coins": [
             {
                 "rank": i + 1,
                 "name": (e["pair"].get("baseToken") or {}).get("name"),
                 "symbol": (e["pair"].get("baseToken") or {}).get("symbol", "").upper(),
                 "chain": e["pair"].get("chainId"),
-                "dex": e["pair"].get("dexId"),
                 "price_usd": e["pair"].get("priceUsd"),
-                "price_change_24h": (e["pair"].get("priceChange") or {}).get("h24"),
-                "price_change_1h": (e["pair"].get("priceChange") or {}).get("h1"),
-                "volume_24h_usd": (e["pair"].get("volume") or {}).get("h24"),
-                "liquidity_usd": (e["pair"].get("liquidity") or {}).get("usd"),
-                "pair_url": e["pair"].get("url"),
-                "score": e["score"],
+                "change_24h": (e["pair"].get("priceChange") or {}).get("h24"),
+                "change_1h": (e["pair"].get("priceChange") or {}).get("h1"),
+                "volume_24h": (e["pair"].get("volume") or {}).get("h24"),
+                "liquidity": (e["pair"].get("liquidity") or {}).get("usd"),
+                "url": e["pair"].get("url"),
+                "score": e["score"]["total"],
                 "reasons": e["reasons"],
             }
             for i, e in enumerate(top)
         ],
     }
-    json_str = json.dumps(json_payload, indent=2)
 
-    for fname, content in [
-        (f"{date_str}.md", md_content),
-        ("latest.md", md_content),
-        (f"{date_str}.json", json_str),
-        ("latest.json", json_str),
-        ("telegram_message.txt", tg_content),
-    ]:
-        (REPORTS_DIR / fname).write_text(content, encoding="utf-8")
-        log.info("Saved: reports/%s", fname)
+    (REPORTS_DIR / f"{date_str}.json").write_text(json.dumps(json_data, indent=2))
+    (REPORTS_DIR / "latest.json").write_text(json.dumps(json_data, indent=2))
+    (REPORTS_DIR / f"{date_str}.md").write_text(tg_msg)
+    (REPORTS_DIR / "latest.md").write_text(tg_msg)
 
-    # 4. Print console summary
     print()
-    print("=" * 65)
-    print(f"  MEMECOIN SCANNER — {date_str}  |  {run_at.strftime('%H:%M UTC')}")
-    print("=" * 65)
-    print("  ⚠️  KEIN FINANZRAT — nur zur Information\n")
-    print(f"  {'#':<3} {'Name':<22} {'Chain':<9} {'24h%':>7}  {'Score':>7}")
-    print(f"  {'-'*3} {'-'*22} {'-'*9} {'-'*7}  {'-'*7}")
+    print("=" * 60)
+    print(f"  MEMECOIN SCANNER - {date_str}")
+    print("  Kein Finanzrat. DYOR.")
+    print("=" * 60)
     for i, e in enumerate(top, 1):
-        pair = e["pair"]
-        name = (pair.get("baseToken") or {}).get("name", "?")[:22]
-        chain = pair.get("chainId", "?")[:9]
-        chg = (pair.get("priceChange") or {}).get("h24") or 0
-        print(f"  {i:<3} {name:<22} {chain:<9} {chg:>+6.1f}%  {e['score']['total']:>6.1f}/100")
-    print()
-    print(f"  Reports gespeichert: {REPORTS_DIR}")
-    print("=" * 65)
+        p = e["pair"]
+        name = (p.get("baseToken") or {}).get("name", "?")[:20]
+        chain = p.get("chainId", "?")[:8]
+        chg = (p.get("priceChange") or {}).get("h24") or 0
+        print(f"  {i}. {name:<20} [{chain}]  {chg:+.1f}%  Score:{e['score']['total']:.0f}")
     print()
 
-    log.info("=== Scanner erfolgreich abgeschlossen ===")
+    send_telegram(tg_msg)
+
+    log.info("=== Fertig ===")
     return 0
 
 
