@@ -5,9 +5,9 @@ name: Daily Memecoin Scan
 
 on:
   schedule:
-    - cron: "0 8 * * *"   # täglich 08:00 UTC = 10:00 Uhr MEZ
+    - cron: "0 8 * * *"
 
-  workflow_dispatch:       # manueller Start im GitHub Actions UI
+  workflow_dispatch:
     inputs:
       debug:
         description: "Verbose logging"
@@ -26,36 +26,29 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      # ── 1. Checkout ───────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # ── 2. Python ─────────────────────────────────────────────────────────
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
 
-      # ── 3. Dependencies ───────────────────────────────────────────────────
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install requests
 
-      # ── 4. Reports-Verzeichnis ────────────────────────────────────────────
       - name: Ensure reports directory
         run: mkdir -p reports
 
-      # ── 5. Scanner ausführen ──────────────────────────────────────────────
       - name: Run memecoin scanner
         env:
           PYTHONUNBUFFERED: "1"
         run: python memecoin_scanner.py
 
-      # ── 6. Report committen ───────────────────────────────────────────────
       - name: Commit report to repository
         run: |
           git config user.name  "github-actions[bot]"
@@ -70,7 +63,6 @@ jobs:
             echo "Report committed & pushed."
           fi
 
-      # ── 7. Telegram-Benachrichtigung senden ───────────────────────────────
       - name: Send Telegram notification
         if: success()
         env:
@@ -78,7 +70,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-            echo "Telegram secrets nicht gesetzt — überspringe Benachrichtigung."
+            echo "Telegram secrets nicht gesetzt."
             exit 0
           fi
 
@@ -87,12 +79,11 @@ jobs:
             exit 0
           fi
 
-          # JSON-sicheres Encoding der Nachricht via Python
           MSG_JSON=$(python3 -c "
-          import json, sys
-          with open('reports/telegram_message.txt', 'r', encoding='utf-8') as f:
-              print(json.dumps(f.read()))
-          ")
+import json
+with open('reports/telegram_message.txt', 'r', encoding='utf-8') as f:
+    print(json.dumps(f.read()))
+")
 
           HTTP_CODE=$(curl -s -o /tmp/tg_response.json -w "%{http_code}" \
             -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
@@ -104,17 +95,16 @@ jobs:
               \"disable_web_page_preview\": false
             }")
 
-          echo "Telegram API HTTP Status: ${HTTP_CODE}"
+          echo "Telegram API Status: ${HTTP_CODE}"
           cat /tmp/tg_response.json
 
           if [ "$HTTP_CODE" != "200" ]; then
-            echo "FEHLER: Telegram-Nachricht konnte nicht gesendet werden."
+            echo "FEHLER: Telegram-Nachricht fehlgeschlagen."
             exit 1
           fi
 
           echo "Telegram-Nachricht erfolgreich gesendet."
 
-      # ── 8. Artifact hochladen (90 Tage) ──────────────────────────────────
       - name: Upload report artifact
         if: always()
         uses: actions/upload-artifact@v4
