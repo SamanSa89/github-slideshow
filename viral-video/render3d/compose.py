@@ -48,7 +48,7 @@ def chyron(d, t, s):
     k, h, a = items[-1]; lt = t - a; out = s["end"] + 0.3 - t
     p = ease(lt / 0.45) * (ease(out / 0.35) if out < 0.35 else 1)
     if p <= 0: return
-    y = 1340; x0 = 40
+    y = 1700; x0 = 40
     fk, fh = font(30), font(46)
     hw = d.textlength(h, font=fh)
     if hw > W - 120: fh = font(int(46 * (W - 120) / hw)); hw = d.textlength(h, font=fh)
@@ -77,7 +77,7 @@ def captions(d, t):
             f = font(64); sp = d.textlength(" ", font=f)
             tot = sum(d.textlength(w["w"], font=f) for w in g) + sp * (len(g) - 1)
             if tot > W - 120: f = font(int(64 * (W - 120) / tot)); sp = d.textlength(" ", font=f); tot = sum(d.textlength(w["w"], font=f) for w in g) + sp * (len(g) - 1)
-            x = (W - tot) / 2; y = 1560
+            x = (W - tot) / 2; y = 1545
             for w in g:
                 col = RED if w["hl"] else (YEL if w["t0"] <= t < w["t1"] + 0.05 else WHITE)
                 d.text((x, y), w["w"], font=f, fill=col, stroke_width=5, stroke_fill=(0, 0, 0))
@@ -91,7 +91,7 @@ lab = "KI-GENERIERT"; td.text((W - 40 - td.textlength(lab, font=font(28, False))
 
 STILL = int(sys.argv[4]) if len(sys.argv) > 4 else None
 ff = None if STILL is not None else subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
-                       "-i", f"{WORK}/mix.wav", "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-preset", "medium", "-crf", "19", "-pix_fmt", "yuv420p",
+                       "-i", f"{WORK}/mix.wav", "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-preset", "medium", "-crf", "21", "-pix_fmt", "yuv420p",
                        "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-ar", "44100", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-shortest", OUT], stdin=subprocess.PIPE)
 last = None
 for fi in ([STILL] if STILL is not None else range(NF)):
