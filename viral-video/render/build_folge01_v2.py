@@ -203,7 +203,7 @@ ff = subprocess.Popen(["ffmpeg", "-y", "-loglevel", "error", "-f", "rawvideo", "
                        "-i", f"{WORK}/voice.wav", "-f", "lavfi", "-t", str(TOTAL), "-i", "sine=f=55:sample_rate=22050",
                        "-f", "lavfi", "-t", str(TOTAL), "-i", "sine=f=82.5:sample_rate=22050",
                        "-filter_complex", "[1:a]highpass=f=70,equalizer=f=180:t=q:w=1:g=3,equalizer=f=3500:t=q:w=1.5:g=2,acompressor=threshold=-20dB:ratio=3:attack=5:release=80,aecho=0.8:0.5:30:0.08,volume=1.5[v];[2:a][3:a]amix=inputs=2,volume=0.05,tremolo=f=0.5:d=0.6[m];[v][m]amix=inputs=2:duration=first:normalize=0[a]",
-                       "-map", "0:v", "-map", "[a]", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-shortest", OUT], stdin=subprocess.PIPE)
+                       "-map", "0:v", "-map", "[a]", "-c:v", "libx264", "-preset", "veryfast", "-crf", "21", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-ar", "44100", "-shortest", OUT], stdin=subprocess.PIPE)
 prev = None
 for fi in range(NF):
     t = fi / FPS
