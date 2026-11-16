@@ -17,6 +17,6 @@
 ```bash
 pip install piper-tts pillow numpy   # ffmpeg muss installiert sein
 curl -L -o voice.tgz https://github.com/rhasspy/piper/releases/download/v0.0.2/voice-de-thorsten-low.tar.gz && tar xzf voice.tgz
-cd render && PIPER_MODEL=../de-thorsten-low.onnx python3 build_folge01_v2.py ../folge-01-wer-hat-den-schalter.mp4 work
+cd render && PIPER_MODEL=../de-thorsten-low.onnx python3 build_folge01_v3.py ../folge-01-wer-hat-den-schalter.mp4 work
 ```
-Stimme: Piper „Thorsten“ (neuronal, Deutsch, offline). Moderator: eigene Figur in `render/host.py` (Lippensynchronisation über die Lautstärke, Blinzeln, gehobene Augenbraue bei Schlüsselwörtern).
+Stimme: Piper „Thorsten“ (neuronal, Deutsch, offline), Beat + Sound-FX prozedural erzeugt (`build_folge01_v3.py`). Moderator: eigene Figur in `render/host.py` (Lippensynchronisation über die Lautstärke, Blinzeln, gehobene Augenbraue bei Schlüsselwörtern).
