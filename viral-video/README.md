@@ -20,3 +20,11 @@ curl -L -o voice.tgz https://github.com/rhasspy/piper/releases/download/v0.0.2/v
 cd render && PIPER_MODEL=../de-thorsten-low.onnx python3 build_folge01_v3.py ../folge-01-wer-hat-den-schalter.mp4 work
 ```
 Stimme: Piper „Thorsten“ (neuronal, Deutsch, offline), Beat + Sound-FX prozedural erzeugt (`build_folge01_v3.py`). Moderator: eigene Figur in `render/host.py` (Lippensynchronisation über die Lautstärke, Blinzeln, gehobene Augenbraue bei Schlüsselwörtern).
+
+## 3D-Pipeline (ab 16.11.2026)
+```bash
+cd render3d && npm install three@0.170.0
+python3 make_audio.py work            # ElevenLabs (Schlüssel per Proxy) → mix.wav + timeline.json
+node render.js frames 720 1280        # three.js-Studio in Headless-Chromium → JPG-Frames
+python3 compose.py frames work out.mp4  # Bauchbinden, Untertitel, Ton
+```
