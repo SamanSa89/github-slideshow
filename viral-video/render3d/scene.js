@@ -6,6 +6,8 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 const params = new URLSearchParams(location.search);
 const W = +(params.get('w') || 720), H = +(params.get('h') || 1280);
 const TL = await (await fetch(params.get('tl') || './work/timeline.json')).json();
+const BGMODE = params.get('mode') === 'bg';
+const MAPIMG = new Image(); if (BGMODE) { MAPIMG.src = './work/map.jpg'; await MAPIMG.decode(); }
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(1); renderer.setSize(W, H);
@@ -69,6 +71,7 @@ for (const x of [-2.1, 2.1]) {
 }
 
 // desk
+const _deskStart = scene.children.length;
 const deskMat = M(0x0d0f16, { roughness: 0.18, metalness: 0.75 });
 mesh(new RoundedBoxGeometry(1.9, 0.08, 0.7, 4, 0.03), deskMat, [0, 0.98, 0.45]);
 const deskFront = mesh(new RoundedBoxGeometry(1.7, 0.92, 0.12, 4, 0.04), deskMat, [0, 0.5, 0.72]);
@@ -79,6 +82,7 @@ const logoTex = new THREE.CanvasTexture(logoCv); logoTex.colorSpace = THREE.SRGB
 mesh(new THREE.PlaneGeometry(1.3, 0.325), new THREE.MeshStandardMaterial({ map: logoTex, emissive: 0xffffff, emissiveMap: logoTex, emissiveIntensity: 0.8 }), [0, 0.62, 0.785]);
 mesh(new THREE.BoxGeometry(1.72, 0.015, 0.02), new THREE.MeshBasicMaterial({ color: 0xff2a3a }), [0, 0.94, 0.79]);
 
+const _deskEnd = scene.children.length;
 // ---------------------------------------------------------------- host
 const SKIN = new THREE.MeshStandardMaterial({ color: 0xd49674, roughness: 0.6 });
 const SUIT = M(0x1a2440, { roughness: 0.62 }), SUIT_D = M(0x111829, { roughness: 0.6 });
@@ -246,7 +250,24 @@ for (const k in P) { P[k].visible = false; stage.add(P[k]); P[k].traverse(o => {
 
 // ---------------------------------------------------------------- LED wall drawing
 const FONT = 'DejaVu Sans, sans-serif';
+function wallDrawBG(t, s) {
+  const c = wctx, lt = t - s.start;
+  const g = c.createLinearGradient(0, 0, 0, 1024); g.addColorStop(0, '#0a2a7a'); g.addColorStop(0.6, '#06205e'); g.addColorStop(1, '#041437'); c.fillStyle = g; c.fillRect(0, 0, 1024, 1024);
+  c.globalAlpha = 0.9; c.drawImage(MAPIMG, 560, 380, 300, 440); c.globalAlpha = 1;
+  // brand panel left
+  c.save(); c.translate(345, 640); c.scale(0.5, 0.5);
+  c.font = `bold 64px ${FONT}`; c.textAlign = 'left'; c.fillStyle = '#ffffff'; c.fillText('DER', -150, -60);
+  c.fillStyle = '#d4142a'; c.beginPath(); c.moveTo(-170, -30); c.lineTo(300, -30); c.lineTo(280, 70); c.lineTo(-190, 70); c.closePath(); c.fill();
+  c.font = `bold 78px ${FONT}`; c.fillStyle = '#fff'; c.fillText('DECODER', -160, 48);
+  c.font = `bold 26px ${FONT}`; c.fillStyle = '#e8eefc'; c.fillText('FRAGEN · PRÜFEN · DECODEN', -160, 120);
+  c.restore();
+  // moving light streak
+  const x = ((t * 90) % 1400) - 200; const lg = c.createLinearGradient(x - 120, 0, x + 120, 0); lg.addColorStop(0, 'rgba(120,180,255,0)'); lg.addColorStop(0.5, 'rgba(120,180,255,0.16)'); lg.addColorStop(1, 'rgba(120,180,255,0)'); c.fillStyle = lg; c.fillRect(0, 0, 1024, 1024);
+  c.fillStyle = '#d4142a'; c.fillRect(0, 960, 1024, 10); c.fillStyle = '#3a8dff'; c.fillRect(0, 60, 1024, 8);
+  wallTex.needsUpdate = true;
+}
 function wallDraw(t, s) {
+  if (BGMODE) return wallDrawBG(t, s);
   const c = wctx, lt = t - s.start;
   const g = c.createLinearGradient(0, 0, 0, 1024); g.addColorStop(0, '#0a0d1c'); g.addColorStop(1, '#16070c'); c.fillStyle = g; c.fillRect(0, 0, 1024, 1024);
   c.strokeStyle = 'rgba(88,224,255,0.07)'; c.lineWidth = 2; for (let x = (t * 20) % 64; x < 1024; x += 64) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, 1024); c.stroke(); } for (let y = 0; y < 1024; y += 64) { c.beginPath(); c.moveTo(0, y); c.lineTo(1024, y); c.stroke(); }
@@ -342,10 +363,21 @@ function animCamera(t, s) {
   camera.lookAt(0.03 + Math.sin(t * 0.21) * 0.03, 1.98, 0);
 }
 
+if (BGMODE) {
+  host.visible = false; for (let i = _deskStart; i < _deskEnd; i++) scene.children[i].visible = false;
+  disc.visible = false; discGlow.visible = false;
+  scene.background = new THREE.Color(0x041233); scene.fog = new THREE.Fog(0x041233, 7, 16);
+  wall.material.emissiveIntensity = 0.75; floor.material.color.setHex(0x0a1430);
+  stage.position.set(0, 2.62, 0.3); stage.scale.setScalar(0.78);
+}
+function animCameraBG(t, s) {
+  camera.position.set(Math.sin(t * 0.17) * 0.18, 2.2 + Math.sin(t * 0.23) * 0.03, 3.6);
+  camera.fov = 40; camera.updateProjectionMatrix(); camera.lookAt(Math.sin(t * 0.17) * 0.05, 2.32, 0);
+}
 let frameI = 0;
 window.renderAt = (t) => {
   const s = sceneAt(t); const fi = Math.round(t * TL.fps);
-  animHost(t, fi); showProp(s.name, t, s); wallDraw(t, s); animCamera(t, s);
+  if (!BGMODE) animHost(t, fi); showProp(s.name, t, s); wallDraw(t, s); if (BGMODE) animCameraBG(t, s); else animCamera(t, s);
   holoLight.intensity = 3 + Math.sin(t * 3) * 0.5;
   discGlow.material.color.setHSL(0.53, 1, 0.5 + 0.1 * Math.sin(t * 4));
   renderer.render(scene, camera); frameI++;
