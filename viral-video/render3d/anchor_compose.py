@@ -12,6 +12,9 @@ from PIL import Image, ImageDraw, ImageFont
 
 A_PNG, M_PNG, BGF, WORK, OUT = sys.argv[1:6]
 STILL = int(sys.argv[6]) if len(sys.argv) > 6 else None
+import os
+BOARD = os.environ.get("BOARD")      # dir with transparent Leinwand frames s00000.png (foreground)
+HEYGEN = os.environ.get("HEYGEN")    # optional green-screen HeyGen video (1080x1920, anchor 1000px wide, bottom-aligned)
 TL = json.load(open(f"{WORK}/timeline.json"))
 W, H, FPS = 1080, 1920, TL["fps"]
 NF = int(TL["total"] * FPS)
@@ -198,6 +201,21 @@ if STILL is None:
                            "-i", f"{WORK}/mix.wav", "-map", "0:v", "-map", "1:a", "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-pix_fmt", "yuv420p",
                            "-af", "loudnorm=I=-14:TP=-1.5:LRA=11", "-ar", "44100", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "-shortest", OUT], stdin=subprocess.PIPE)
 lastbg = None; msm = 0.0
+hg_proc = None
+if HEYGEN:
+    hg_proc = subprocess.Popen(["ffmpeg", "-loglevel", "error", "-i", HEYGEN, "-vf", f"fps={FPS},scale=1080:1920", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], stdout=subprocess.PIPE)
+    if STILL: hg_proc.stdout.read(1080 * 1920 * 3 * STILL)
+def heygen_layer():
+    raw = hg_proc.stdout.read(1080 * 1920 * 3) if hg_proc else b""
+    if len(raw) < 1080 * 1920 * 3: return None
+    f = np.frombuffer(raw, np.uint8).reshape(1920, 1080, 3).astype(np.float32)
+    r, g, b = f[..., 0], f[..., 1], f[..., 2]
+    key = np.clip((g - np.maximum(r, b) - 25) / 45.0, 0, 1)           # 1 = green screen
+    alpha = 1 - key
+    g2 = np.minimum(g, np.maximum(r, b) * 1.05 + 8)                     # despill
+    rgba = np.dstack([r, g2, b, alpha * 255]).astype(np.uint8)
+    return rgba
+HG_S0 = 1000.0 / PERSON.shape[1]; HG_FACE = (40 + FACE[0] * HG_S0, 1000 + FACE[1] * HG_S0)
 for fi in ([STILL] if STILL is not None else range(NF)):
     t = fi / FPS; s = scene_at(t); c = float(CL[fi])
     # --- anchor animation params
@@ -207,15 +225,24 @@ for fi in ([STILL] if STILL is not None else range(NF)):
     q = any(w["t0"] <= t < w["t1"] + 0.4 and w["w"].endswith("?") for w in TL["words"])
     theta = 1.1 * math.sin(t * 0.55) + 0.5 * math.sin(t * 1.37 + 1) + (1.6 if q else 0) * 1.0
     nod = 3.5 * msm + 2.0 * math.sin(t * 2.1) * msm + hl * 3
-    person = animate_head(a, blink_at(t), hl, theta, nod)
+    if BOARD: c = 0.205 + 0.05 * hl
+    hg = heygen_layer() if HEYGEN else None
+    person = None if hg is not None else animate_head(a, blink_at(t), hl, theta, nod)
     # --- camera framing
     sc = 0.668 + (1.02 - 0.668) * c
     breath = 1 + 0.004 * math.sin(t * 1.5)
     sway = 10 * math.sin(t * 0.31) * (1 - 0.4 * c)
-    ph, pw = person.shape[:2]
-    tw, th_ = int(pw * sc), int(ph * sc * breath)
-    pr = cv2.resize(person, (tw, th_), interpolation=cv2.INTER_AREA)
-    px = int(540 + sway - FACE[0] * sc); py = H - th_ + int(6 * c)
+    if hg is None:
+        ph, pw = person.shape[:2]
+        tw, th_ = int(pw * sc), int(ph * sc * breath)
+        pr = cv2.resize(person, (tw, th_), interpolation=cv2.INTER_AREA)
+        px = int(540 + sway - FACE[0] * sc); py = H - th_ + int(6 * c)
+    else:
+        k = sc / HG_S0
+        tw, th_ = int(1080 * k), int(1920 * k)
+        pr = cv2.resize(hg, (tw, th_), interpolation=cv2.INTER_AREA)
+        face_y = H - (PERSON.shape[0] - FACE[1]) * sc + 6 * c
+        px = int(540 + sway - HG_FACE[0] * k); py = int(face_y - HG_FACE[1] * k)
     # --- background with zoom/parallax + DOF
     try:
         bg = Image.open(f"{BGF}/f{fi:05d}.jpg").convert("RGB"); lastbg = bg
@@ -232,8 +259,12 @@ for fi in ([STILL] if STILL is not None else range(NF)):
     sub = pr[y0 - py:y1 - py, x0 - px:x1 - px].astype(np.float32)
     al = sub[..., 3:4] / 255.0
     frame[y0:y1, x0:x1] = frame[y0:y1, x0:x1] * (1 - al) + sub[..., :3] * al
-    # subtle vignette
     img_o = Image.fromarray(np.clip(frame, 0, 255).astype(np.uint8))
+    if BOARD:
+        try:
+            bd = Image.open(f"{BOARD}/s{fi:05d}.png"); img_o.paste(bd, (0, 95), bd)
+        except FileNotFoundError:
+            pass
     ov = Image.new("RGBA", (W, H)); d = ImageDraw.Draw(ov)
     for i in range(0, 420, 10): d.rectangle([0, H - 420 + i, W, H - 410 + i], fill=(0, 0, 20, int(120 * i / 420)))
     ov.alpha_composite(TOPBAR)

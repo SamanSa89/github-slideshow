@@ -10,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fontsource/caveat": "^5.1.0",
+    "roughjs": "^4.6.6",
     "three": "^0.170.0"
   }
 }

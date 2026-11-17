@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Decoder Leinwand</title>
+<style>
+@font-face { font-family: 'Caveat'; font-weight: 700; src: url('./node_modules/@fontsource/caveat/files/caveat-latin-700-normal.woff2') format('woff2'); }
+html, body { margin: 0; background: transparent; }
+#stage { position: relative; width: 1080px; height: 860px; overflow: hidden; }
+#board { position: absolute; left: 60px; top: 50px; width: 960px; height: 720px; transform-origin: 50% 0%; }
+#paper { position: absolute; inset: 0; border-radius: 10px;
+  background: radial-gradient(ellipse at 30% 20%, #fffdf7 0%, #f6f1e4 70%, #eee6d3 100%);
+  box-shadow: 0 26px 50px rgba(0,0,0,.45), 0 0 0 10px #2b2f3a, 0 0 0 13px #c9ced8; }
+#paper::after { content: ''; position: absolute; inset: 0; border-radius: 10px; opacity: .25;
+  background-image: repeating-linear-gradient(0deg, rgba(120,100,60,.05) 0 2px, transparent 2px 5px), repeating-linear-gradient(90deg, rgba(120,100,60,.04) 0 3px, transparent 3px 7px); }
+svg { position: absolute; inset: 0; }
+text { font-family: 'Caveat', cursive; font-weight: 700; }
+</style>
+<script type="importmap">{"imports":{"roughjs":"./node_modules/roughjs/bundled/rough.esm.js"}}</script>
+</head><body><div id="stage"><div id="board"><div id="paper"></div><svg id="svg" width="960" height="720" viewBox="0 0 960 720"></svg></div></div>
+<script type="module" src="./sketch.js"></script></body></html>
