@@ -7,7 +7,8 @@ import base64, json, os, re, subprocess, sys, urllib.request, wave
 import numpy as np
 
 WORK = sys.argv[1] if len(sys.argv) > 1 else "work"
-VOICE = sys.argv[2] if len(sys.argv) > 2 else "nPczCjzI2devNBz1zQrb"   # "Brian" premade
+VOICE = sys.argv[2] if len(sys.argv) > 2 and sys.argv[2] else "nPczCjzI2devNBz1zQrb"   # "Brian" premade
+EPISODE = json.load(open(sys.argv[3])) if len(sys.argv) > 3 else None
 os.makedirs(WORK, exist_ok=True)
 SR, FPS = 44100, 30
 
@@ -20,6 +21,8 @@ SCRIPT = [
  ("verdict", "Ist das eine Verschwörung? Nein. Das ist Physik und Geld. Wer zuverlässig in den Orbit kommt, kontrolliert die Infrastruktur dieses Jahrhunderts. Und gerade sieht es so aus, als hielte im Westen nur *eine Firma* diesen Schlüssel wirklich in der Hand."),
  ("cta", "Also: Glaub mir nicht. *Prüf mich.* Die Quellen stehen in der Beschreibung. Ich bin der Decoder. Folg mir, morgen geht es weiter."),
 ]
+
+if EPISODE: SCRIPT = [tuple(x) for x in EPISODE['scenes']]
 
 def parse(text):
     """-> spoken string, tokens [(display, hl, span_start, span_end)] (spans in spoken string)."""
@@ -118,11 +121,19 @@ def riser(d=1.6):
 W_ = whoosh()
 for s in scenes[1:]: add(FX, W_, s["start"] - 0.5, 0.35)
 add(FX, boom(), scenes[0]["start"], 0.55)
-anom = next(w["t0"] for w in words if w["scene"] == "vulcan" and w["w"].startswith("Anomalie"))
-add(FX, boom(), anom, 0.6)
-vs = next(s for s in scenes if s["name"] == "verdict")["start"]; add(FX, riser(), vs - 1.6, 0.25)
-pm = next(w["t0"] for w in words if w["scene"] == "cta" and w["w"].startswith("Prüf")); add(FX, boom(), pm, 0.35)
-
+def wfind(scene, tok):
+    return next(w["t0"] for w in words if w["scene"] == scene and w["w"].lower().startswith(tok.lower()))
+events = {}
+if EPISODE:
+    for sc_, tok in EPISODE.get("booms", []): add(FX, boom(), wfind(sc_, tok), 0.45)
+    if EPISODE.get("riser"):
+        vs = next(s for s in scenes if s["name"] == EPISODE["riser"])["start"]; add(FX, riser(), vs - 1.6, 0.25)
+    for name, (sc_, tok) in EPISODE.get("events", {}).items(): events[name] = wfind(sc_, tok)
+else:
+    anom = wfind("vulcan", "Anomalie"); add(FX, boom(), anom, 0.6)
+    vs = next(s for s in scenes if s["name"] == "verdict")["start"]; add(FX, riser(), vs - 1.6, 0.25)
+    pm = wfind("cta", "Prüf"); add(FX, boom(), pm, 0.35)
+    events = {"anomaly": anom, "pruef": pm}
 MIX = V + MUS * 0.16 + FX * 0.5
 MIX = MIX / (np.abs(MIX).max() + 1e-6) * 0.95
 wav_write(f"{WORK}/mix.wav", MIX)
@@ -131,5 +142,6 @@ hop = SR // FPS; nf = int(TOTAL * FPS) + 1
 lev = np.array([np.sqrt(np.mean(V[k * hop:(k + 1) * hop] ** 2)) if k * hop < N else 0 for k in range(nf)])
 lev = np.clip(lev / (np.percentile(lev[lev > 0.003], 95) + 1e-6), 0, 1)
 json.dump({"total": TOTAL, "fps": FPS, "scenes": scenes, "words": words, "mouth": [round(float(x), 3) for x in lev],
-           "events": {"anomaly": anom, "pruef": pm}}, open(f"{WORK}/timeline.json", "w"), ensure_ascii=False)
+           "events": events, "chyrons": [[sc_, k, h, (wfind(sc_, tok) if tok else None)] for sc_, k, h, tok in (EPISODE or {}).get("chyrons", [])]},
+          open(f"{WORK}/timeline.json", "w"), ensure_ascii=False)
 print(f"total {TOTAL:.1f}s, words {len(words)}, chars {sum(len(p[1]) for p in parsed)}")

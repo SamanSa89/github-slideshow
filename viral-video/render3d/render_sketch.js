@@ -10,9 +10,9 @@ const srv = http.createServer((q, r) => { const p = path.join(root, decodeURICom
   const b = await chromium.launch();
   const p = await b.newPage({ viewport: { width: 1080, height: 860 } });
   p.on('pageerror', e => console.error('pageerror:', e.message)); p.on('console', m => { if (m.type() === 'error') console.error('page:', m.text()); });
-  await p.goto(`http://127.0.0.1:${srv.address().port}/sketch.html`);
+  await p.goto(`http://127.0.0.1:${srv.address().port}/sketch.html?tl=./${opt('--tl') || 'work/timeline.json'}&ep=${opt('--ep') || ''}`);
   await p.waitForFunction('window.READY === true', null, { timeout: 60000 });
-  const tl = JSON.parse(fs.readFileSync(path.join(root, 'work/timeline.json')));
+  const TLP = opt('--tl') || 'work/timeline.json'; const tl = JSON.parse(fs.readFileSync(path.join(root, TLP)));
   let times;
   if (opt('--times')) times = opt('--times').split(',').map(Number);
   else { const f0 = +(opt('--from') || 0), f1 = +(opt('--to') || Math.floor(tl.total * tl.fps)); times = []; for (let f = f0; f < f1; f++) times.push(f / tl.fps); }

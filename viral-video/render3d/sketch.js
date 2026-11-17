@@ -2,7 +2,8 @@
 // window.renderAt(t) updates the drawing for time t (deterministic).
 import rough from 'roughjs';
 
-const TL = await (await fetch('./work/timeline.json')).json();
+const PRM = new URLSearchParams(location.search); const EP = PRM.get('ep') || '';
+const TL = await (await fetch(PRM.get('tl') || './work/timeline.json')).json();
 await document.fonts.load('700 40px Caveat');
 const NS = 'http://www.w3.org/2000/svg';
 const svg = document.getElementById('svg'), board = document.getElementById('board');
@@ -60,6 +61,99 @@ const sat = (x, y, s, t0, col = INK) => { draw(rc.rectangle(x - s * 0.3, y - s *
 const highlight = (x, y, w, h, t0) => draw(rc.rectangle(x, y, w, h, { stroke: 'none', fill: YEL, fillStyle: 'zigzag', hachureGap: 7, fillWeight: 14, roughness: 1.6, seed: seed++ }), t0, 0.5, YEL);
 
 // ------------------------------------------------------------------ scenes
+if (EP === 'luftraum') {
+
+const jet = (x, y, ang, sz, t0, col = RED) => {   // top-view jet, nose pointing to ang (rad)
+  const P = [[0, -1], [0.12, -0.55], [0.12, -0.15], [0.75, 0.25], [0.75, 0.38], [0.12, 0.2], [0.1, 0.62], [0.35, 0.8], [0.35, 0.9], [0, 0.82], [-0.35, 0.9], [-0.35, 0.8], [-0.1, 0.62], [-0.12, 0.2], [-0.75, 0.38], [-0.75, 0.25], [-0.12, -0.15], [-0.12, -0.55]];
+  const c = Math.cos(ang + Math.PI / 2), s_ = Math.sin(ang + Math.PI / 2);
+  draw(rc.polygon(P.map(([px, py]) => [x + (px * c - py * s_) * sz, y + (px * s_ + py * c) * sz]), o({ stroke: col, strokeWidth: 2.4, fill: col, fillStyle: 'hachure', hachureGap: 4 })), t0, 0.5, col);
+};
+const ship = (x, y, w, t0, col = INK) => draw(rc.polygon([[x, y], [x + w, y], [x + w * 0.85, y + w * 0.28], [x + w * 0.12, y + w * 0.28]], o({ stroke: col, strokeWidth: 2.2 })), t0, 0.22, col);
+const LAND = { stroke: '#2e5e3a', fill: '#cfe3c4', fillStyle: 'hachure', hachureGap: 7 };
+
+CUR = SC.hook;
+draw(rc.circle(200, 230, 260, o()), wt('4:07'), 0.8);
+draw(rc.line(200, 230, 200, 125, o({ strokeWidth: 5 })), wt('4:07', 0, 0.5), 0.3); draw(rc.line(200, 230, 260, 210, o({ strokeWidth: 5 })), wt('4:07', 0, 0.7), 0.3);
+text('4:07', 120, 440, 110, RED, wt('4:07', 0, 0.2));
+text('Uhr · Japan', 105, 500, 46, INK, wt('japanische'));
+draw(rc.path('M 560 120 q 40 -30 90 -10 t 90 20 t 60 60', o({ stroke: '#888', strokeWidth: 2 })), wt('geschlafen'), 0.6, '#888');
+text('Zzz', 740, 120, 60, '#888', wt('geschlafen', 0, 0.3));
+draw(rc.path('M 470 520 Q 520 380 640 330 Q 760 290 880 330 Q 820 420 700 470 Q 600 520 470 520 Z', o(LAND)), wt('Japans', 0, -0.4), 0.8, '#2e5e3a');
+text('JAPAN', 620, 450, 50, '#2e5e3a', wt('Japans', 0, -0.1));
+draw(rc.path('M 440 560 Q 520 300 700 270 Q 860 250 920 300', o({ stroke: RED, strokeLineDash: [12, 9] })), wt('Luftraum', 0, -0.2), 0.6, RED);
+jet(560, 240, 2.2, 34, wt('russische')); jet(640, 200, 2.2, 34, wt('Militärflugzeuge'));
+text('nicht umgekehrt!', 420, 650, 64, RED, wt('nicht', 0, -0.1));
+
+CUR = SC.route;
+// map: Korea, Japan (Kyushu/Honshu), Taiwan, Yonaguni
+draw(rc.path('M 170 40 Q 230 60 240 140 Q 250 230 210 300 Q 170 320 150 260 Q 130 160 170 40 Z', o(LAND)), SC.route.s.start + 0.1, 0.7, '#2e5e3a');
+draw(rc.path('M 330 330 Q 380 290 420 300 Q 440 360 400 410 Q 350 420 330 330 Z', o(LAND)), SC.route.s.start + 0.4, 0.6, '#2e5e3a');
+draw(rc.path('M 420 290 Q 520 230 640 170 Q 760 110 860 40 L 880 70 Q 790 150 660 220 Q 540 280 440 320 Z', o(LAND)), SC.route.s.start + 0.6, 0.7, '#2e5e3a');
+draw(rc.ellipse(170, 600, 70, 150, o(LAND)), SC.route.s.start + 0.9, 0.5, '#2e5e3a');
+text('Korea', 110, 340, 36, '#2e5e3a', SC.route.s.start + 0.5); text('Japan', 640, 290, 40, '#2e5e3a', SC.route.s.start + 0.8); text('Taiwan', 60, 700, 38, '#2e5e3a', SC.route.s.start + 1.0);
+draw(rc.circle(330, 250, 14, o({ stroke: RED, fill: RED, fillStyle: 'solid' })), wt('Okinoshima'), 0.3, RED);
+text('Okinoshima · 3 min', 345, 225, 40, RED, wt('Okinoshima', 0, 0.1));
+draw(rc.path('M 560 40 Q 430 120 330 250', o({ stroke: RED, strokeWidth: 4, strokeLineDash: [14, 9] })), wt('Drei', 0, 0), 0.8, RED);
+jet(470, 330, -0.6, 22, wt('Abfangjäger'), BLUE); jet(510, 360, -0.6, 22, wt('Abfangjäger', 0, 0.2), BLUE);
+text('Funkwarnung', 520, 410, 36, BLUE, wt('Warnungen', 0, -0.2));
+draw(rc.path('M 330 250 Q 290 280 285 330', o({ stroke: RED, strokeWidth: 4, strokeLineDash: [14, 9] })), wt('Tsushima', 0, -0.3), 0.5, RED);
+text('Tsushima', 200, 395, 34, INK, wt('Tsushima'));
+jet(120, 210, 0.8, 18, wt('Südkorea'), BLUE); text('Südkorea: Jets ↑', 20, 180, 32, BLUE, wt('Jets', 0, -0.3));
+draw(rc.path('M 285 330 Q 300 450 245 560', o({ stroke: RED, strokeWidth: 4, strokeLineDash: [14, 9] })), wt('Lücke', 0, -0.3), 0.6, RED);
+draw(rc.circle(265, 585, 12, o({ fill: INK, fillStyle: 'solid' })), wt('Yonaguni', 0, -0.2), 0.2); text('Yonaguni', 280, 595, 32, INK, wt('Yonaguni'));
+draw(rc.path('M 245 560 Q 225 620 250 660', o({ stroke: RED, strokeWidth: 4, strokeLineDash: [14, 9] })), wt('Ostküste', 0, -0.4), 0.5, RED);
+text('Taiwan ortet', 20, 520, 34, INK, wt('ortet', 0, -0.1));
+arrow(255, 665, 640, 650, wt('Pazifik', 0, -0.4), RED); text('Pazifik', 650, 665, 48, BLUE, wt('Pazifik'));
+text('Moskau: …', 600, 560, 56, INK, wt('Moskau')); draw(rc.line(640, 520, 860, 520, o({ stroke: '#888' })), wt('Schweigt'), 0.3, '#888');
+
+CUR = SC.china;
+text('100+', 60, 160, 130, RED, wt('100'));
+for (let i = 0; i < 18; i++) ship(330 + (i % 6) * 95, 70 + Math.floor(i / 6) * 60, 70, wt('Kriegs') + i * 0.07);
+text('Schiffe im Westpazifik', 330, 290, 46, INK, wt('Westpazifik', 0, -0.2));
+text('ohne Ankündigung', 330, 340, 40, RED, wt('Ankündigung', 0, -0.3));
+draw(rc.ellipse(230, 560, 300, 70, o({ fill: '#555c6a', fillStyle: 'hachure', hachureGap: 6 })), wt('U-Boot', 0, -0.2), 0.6);
+draw(rc.rectangle(215, 500, 50, 30, o()), wt('U-Boot', 0, 0.2), 0.3);
+draw(rc.path('M 240 495 Q 260 380 340 380', o({ stroke: RED, strokeLineDash: [10, 8] })), TL.events.rakete, 0.6, RED);
+draw(rc.path(rocket(340, 350, 70), o({ stroke: RED })), TL.events.rakete + 0.4, 0.4, RED);
+text('ICBM?', 400, 420, 70, RED, TL.events.rakete + 0.5);
+text('„sagt ein Beamter“', 420, 480, 38, INK, wt('Beamter', 0, -0.3));
+{ const st = document.createElementNS(NS, 'g'); st.setAttribute('transform', 'rotate(-8 710 600)'); CUR.g.appendChild(st);
+  const n = rc.rectangle(560, 560, 300, 80, o({ stroke: '#e0a100', strokeWidth: 6 })); st.appendChild(n); draw(n, wt('nicht', 0, -0.1), 0.4, '#e0a100'); st.appendChild(CUR.g.lastChild);
+  text('UNBESTÄTIGT', 710, 620, 58, '#e0a100', wt('nicht', 0, 0.2), 0.5, 'middle', -8); }
+
+CUR = SC.timing;
+draw(rc.rectangle(60, 60, 220, 220, o()), wt('Zeitpunkt'), 0.6); draw(rc.rectangle(60, 60, 220, 55, o({ stroke: RED, fill: RED, fillStyle: 'hachure', hachureGap: 6 })), wt('Zeitpunkt', 0, 0.4), 0.4, RED);
+text('19.11.', 75, 220, 80, INK, wt('19. November', 0, -0.2));
+draw(rc.circle(640, 330, 260, o({ fill: '#c9b38a', fillStyle: 'hachure', hachureGap: 9 })), wt('Stunden'), 0.7);
+[['Trump', 640, 150], ['Xi', 820, 400], ['Putin', 460, 400]].forEach(([n, x, y], i) => { draw(rc.circle(x, y, 60, o({ stroke: BLUE })), wt(n === 'Xi' ? 'Xi' : n), 0.3, BLUE); text(n, x, y + (y < 300 ? -45 : 75), 44, BLUE, wt(n === 'Xi' ? 'Xi' : n, 0, 0.1), 0.4, 'middle'); });
+text('Shenzhen', 640, 340, 48, RED, wt('Shenzhen'), 0.6, 'middle');
+draw(rc.circle(640, 560, 60, o({ stroke: '#888', strokeLineDash: [8, 8] })), wt('Europa', 0, -0.2), 0.4, '#888');
+text('Europa?', 640, 650, 50, '#888', wt('Europa'), 0.5, 'middle'); cross(615, 535, 50, wt('Tisch'), RED, 5);
+
+CUR = SC.decode;
+text('„Cyberangriffe!“', 60, 140, 80, INK, wt('Cyberangriffe', 0, -0.3));
+draw(rc.circle(780, 160, 150, o({ stroke: BLUE, strokeWidth: 5 })), wt('geprüft', 0, -0.3), 0.5, BLUE); draw(rc.line(835, 215, 910, 290, o({ stroke: BLUE, strokeWidth: 9 })), wt('geprüft'), 0.3, BLUE);
+text('Behörden: technischer Fehler', 60, 330, 58, BLUE, wt('Behörden'));
+text('≠ Angriff', 60, 410, 70, RED, wt('Angriff'));
+highlight(60, 520, 560, 80, wt('Geschichte', 0, -0.3));
+text('Geschichte ≠ Analyse', 70, 585, 72, INK, wt('Geschichte', 0, -0.2));
+
+CUR = SC.fazit;
+text('Russland', 60, 170, 64, RED, wt('Russland')); text('China', 60, 330, 64, RED, wt('China'));
+[['Washington', 160], ['Tokio', 300], ['Taipeh', 440]].forEach(([n, y]) => { arrow(330, 240, 580, y - 15, wt(n, 0, -0.3)); text(n, 600, y, 56, BLUE, wt(n)); });
+draw(rc.path('M 300 200 q 15 40 0 80', o({ stroke: RED })), wt('zeigen'), 0.3, RED); draw(rc.path('M 320 185 q 25 55 0 110', o({ stroke: RED })), wt('zeigen', 0, 0.15), 0.3, RED);
+highlight(60, 560, 840, 90, wt('Verhandlungsposition', 0, -0.5));
+text('= Verhandlungsposition', 80, 630, 76, INK, wt('Verhandlungsposition', 0, -0.4));
+text('kein geheimer Plan', 60, 520, 46, '#888', wt('geheimer', 0, -0.2));
+
+CUR = SC.cta;
+highlight(150, 170, 660, 120, wt('Prüf', 0, -0.3));
+text('PRÜF MICH!', 480, 270, 130, RED, wt('Prüf', 0, -0.1), 0.7, 'middle');
+draw(rc.ellipse(480, 225, 760, 210, o({ stroke: RED, strokeWidth: 5 })), wt('mich', 0, 0.2), 0.6, RED);
+text('Quellen ↓ in der Beschreibung', 480, 460, 58, INK, wt('Quellen'), 1.0, 'middle');
+text('Nächste Folge: nach Shenzhen', 480, 600, 54, BLUE, wt('Shenzhen', 0, -0.2), 0.9, 'middle');
+
+} else {
 CUR = SC.hook;
 draw(rc.circle(170, 200, 210, o()), wt('48'), 0.8); draw(rc.linearPath([[170, 200], [170, 125]], o({ stroke: RED })), wt('48', 0, 0.6), 0.3, RED); draw(rc.linearPath([[170, 200], [225, 230]], o()), wt('48', 0, 0.8), 0.3);
 text('48 h', 95, 370, 96, RED, wt('48', 0, 0.3));
@@ -162,6 +256,7 @@ text('Quellen ↓ in der Beschreibung', 480, 460, 58, INK, wt('Quellen'), 1.0, '
 draw(rc.rectangle(230, 540, 60, 60, o({ stroke: BLUE })), wt('Folg', 0, -0.2), 0.4, BLUE); check(240, 575, 50, wt('Folg', 0, 0.3), GREEN);
 text('Folgen – morgen geht’s weiter', 310, 595, 54, BLUE, wt('Folg', 0, 0.1));
 
+}
 // ------------------------------------------------------------------ pen
 const pen = document.createElementNS(NS, 'g');
 pen.innerHTML = `<g transform="rotate(-35)"><rect x="-7" y="-150" width="22" height="120" rx="6" fill="#2a2f3a"/><rect x="-7" y="-150" width="22" height="34" rx="6" class="cap"/><path d="M -7 -30 L 15 -30 L 6 -4 L 2 -4 Z" fill="#d9dde3"/><path d="M 2 -4 L 6 -4 L 4 2 Z" class="tip"/></g>`;

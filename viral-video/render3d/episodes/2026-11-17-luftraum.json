@@ -1,0 +1,25 @@
+{
+ "scenes": [
+  ["hook", "{4:07 Uhr,|Vier Uhr sieben,} japanische Zeit. Während du geschlafen hast, sind zwei russische Militärflugzeuge in Japans *Luftraum* eingedrungen. Und dann sind sie nicht umgekehrt."],
+  ["route", "Drei Minuten über der Insel Okinoshima. Japan schickt *Abfangjäger* und funkt Warnungen. Doch statt heimzufliegen, geht es weiter: durch die Tsushima-Straße, vorbei an Südkorea, das ebenfalls Jets aufsteigen lässt, durch die Lücke zwischen Yonaguni und *Taiwan.* Taiwan ortet sie vor seiner Ostküste. Dann drehen sie ab in den Pazifik. Und Moskau? *Schweigt.*"],
+  ["china", "Gleichzeitig zählt Taiwan über {100|hundert} chinesische Kriegs- und Küstenwachschiffe im Westpazifik, ohne jede Ankündigung. Ein taiwanischer Beamter behauptet sogar, ein U-Boot habe eine *Interkontinentalrakete* abgefeuert. Bestätigt ist das *nicht.*"],
+  ["timing", "Und jetzt der Zeitpunkt: Das alles passiert Stunden bevor Trump, {Xi|Schi} und Putin sich am {19. November|neunzehnten November} in *Shenzhen* treffen. Ohne Europa am Tisch."],
+  ["decode", "Im Netz liest du gerade: Und dazu noch die *Cyberangriffe* auf Amerika! Ich habe das geprüft. Den Flugstopp in den USA erklären die Behörden mit einem technischen Fehler, nicht mit einem Angriff. Wer das verknüpft, erzählt dir eine *Geschichte,* keine Analyse."],
+  ["fazit", "Die echte Botschaft ist deutlich genug. Russland und China zeigen vor dem Gipfel, was sie können. Ein Signal an Washington, Tokio und Taipeh. Das ist kein geheimer Plan. Das ist *Verhandlungsposition.*"],
+  ["cta", "Also: Glaub mir nicht. *Prüf mich.* Die Quellen stehen in der Beschreibung. Ich bin der Decoder. Wir sehen uns nach Shenzhen."]
+ ],
+ "booms": [["china", "Interkontinentalrakete"], ["cta", "Prüf"]],
+ "riser": "fazit",
+ "events": {"rakete": ["china", "Interkontinentalrakete"]},
+ "chyrons": [
+  ["hook", "17.11.2026 · 4:07 UHR JST", "RUSSISCHE MILITÄRJETS IN JAPANS LUFTRAUM", null],
+  ["route", "ROUTE LAUT JAPAN & TAIWAN", "OKINOSHIMA → TSUSHIMA → YONAGUNI → PAZIFIK", null],
+  ["route", "TOKIO", "PROTEST AN MOSKAU · MOSKAU SCHWEIGT", "Moskau"],
+  ["china", "LAUT TAIWAN", "100+ CHINESISCHE SCHIFFE IM WESTPAZIFIK", null],
+  ["china", "ANONYME QUELLE · UNBESTÄTIGT", "ICBM-TEST VON EINEM U-BOOT?", "behauptet"],
+  ["timing", "SHENZHEN · 19.11.", "TRUMP · XI · PUTIN – OHNE EUROPA", null],
+  ["decode", "FAKTENCHECK", "„CYBERANGRIFFE“? BEHÖRDEN: TECHNISCHER FEHLER", null],
+  ["fazit", "ANALYSE", "MACHTDEMONSTRATION VOR DEM GIPFEL", null],
+  ["cta", "PRÜF MICH", "QUELLEN IN DER BESCHREIBUNG", null]
+ ]
+}

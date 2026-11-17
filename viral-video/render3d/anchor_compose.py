@@ -27,6 +27,7 @@ BX0, BX1, BY0, BY1 = xs_.min() - 4, xs_.max() + 4, max(0, ys_.min() - 4), img.sh
 PERSON = np.dstack([img, mask])[BY0:BY1, BX0:BX1].copy()          # RGBA crop
 FACE = (1305 - BX0, 520 - BY0)                                     # face anchor point in crop
 MOUTH_X, LIP_Y = 1305 - BX0, 632 - BY0
+MX_C, MX_HW, MT_Y = 1306 - BX0, 84.0, 617.5 - BY0
 EYES = [(1211 - BX0, 441 - BY0), (1396 - BX0, 441 - BY0)]
 BROWS = [(1210 - BX0, 385 - BY0), (1400 - BX0, 385 - BY0)]
 PIVOT = (1305 - BX0, 835 - BY0)
@@ -57,31 +58,35 @@ CLOSED = [closed_eye(*e) for e in EYES]
 def animate_head(a, blink, brow, theta, nod):
     patch = PERSON[HY0:HY1, HX0:HX1].astype(np.float32)
     X, Y = gx, gy
-    # 1) jaw/lip + brow warp
-    d = a * 26.0
-    wx = np.exp(-((X - MOUTH_X) / 78.0) ** 2)
-    wy = np.clip((Y - LIP_Y) / 4.0, 0, 1) * np.clip((870 - BY0 - Y) / 90.0, 0, 1)
-    mapy = Y - d * wx * wy
+    # 1) mouth model: closed lips at rest (lower lip covers the teeth crescent), single opening when speaking
+    o = clamp(a)
+    u = np.clip((X - MX_C) / MX_HW, -1, 1)
+    T = MT_Y - 7.5 * u ** 2                                   # bottom edge of upper lip (top of teeth)
+    G = np.clip(15.0 * (1 - u ** 2), 0, None)                 # original teeth height
+    E = 15.0 * np.clip(1 - u ** 2, 0, None) ** 0.8            # extra opening when speaking
+    inmouth = (np.abs(X - MX_C) < MX_HW).astype(np.float32)
+    s_lip = (-G + o * (G + E)) * inmouth
+    s_c = -15.0 + o * 30.0
+    s_jaw = s_c * np.exp(-((X - MX_C) / 115.0) ** 2)
+    k = np.clip((Y - (T + 22)) / 30.0, 0, 1)
+    shift = s_lip * (1 - k) + s_jaw * k
+    wy = np.clip(Y - T + 0.5, 0, 1) * np.clip((870 - BY0 - Y) / 90.0, 0, 1)
+    mapy = Y - shift * wy
     bw = sum(np.exp(-((X - bx) / 75.0) ** 2 - ((Y - by) / 30.0) ** 2) for bx, by in BROWS)
     mapy = mapy + brow * 7.0 * bw
     p1 = cv2.remap(patch, (X - HX0).astype(np.float32), (mapy - HY0).astype(np.float32), cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
-    # 2) mouth interior
-    if d > 1.0:
-        g = np.zeros(p1.shape[:2], np.float32); col = np.zeros(p1.shape[:2] + (3,), np.float32)
-        xs = np.arange(MOUTH_X - 60, MOUTH_X + 61)
-        for x in xs:
-            sh = max(0.0, 1 - ((x - MOUTH_X) / 60.0) ** 2) ** 0.7
-            gap = d * math.exp(-((x - MOUTH_X) / 78.0) ** 2) * sh
-            if gap < 0.8: continue
-            y0 = LIP_Y - 1; y1 = int(LIP_Y + gap)
-            g[y0 - HY0:y1 - HY0 + 1, x - HX0] = 1
-        g = cv2.GaussianBlur(g, (0, 0), 1.6)
-        yy = (Y - LIP_Y) / max(d, 1)
-        base = np.stack([62 + 60 * yy, 16 + 22 * yy, 20 + 22 * yy], -1)
-        if d > 13:  # lower teeth hint
-            lt = np.exp(-((Y - (LIP_Y + d * 0.82)) / 2.2) ** 2) * np.exp(-((X - MOUTH_X) / 45.0) ** 2) * 0.55
-            base = base * (1 - lt[..., None]) + np.array([225, 220, 214]) * lt[..., None]
-        p1[..., :3] = p1[..., :3] * (1 - g[..., None]) + base * g[..., None]
+    # 2) fill the opening: real upper teeth hang from the lip, dark mouth cavity below
+    gap = o * (G + E) * inmouth
+    rel = Y - T
+    inside = np.clip(gap - rel, 0, 1) * np.clip(rel + 0.5, 0, 1)
+    if inside.max() > 0.01:
+        teethH = np.minimum(gap, G * 0.92)
+        tm = np.clip(teethH - rel, 0, 1)[..., None]
+        yy = np.clip((rel - teethH) / np.maximum(gap - teethH, 1), 0, 1)
+        cav = np.stack([70 + 55 * yy, 20 + 22 * yy, 24 + 22 * yy], -1)
+        fill = patch[..., :3] * tm * (1 - 0.25 * np.clip((rel - teethH + 3) / 3, 0, 1)[..., None]) + cav * (1 - tm)
+        al = inside[..., None]
+        p1[..., :3] = p1[..., :3] * (1 - al) + fill * al
     # 3) blink
     if blink > 0.01:
         for (x0, y0, cp, m) in CLOSED:
@@ -154,6 +159,9 @@ CHY = {
  "verdict": [("FAZIT", "PHYSIK + GELD = KONTROLLE", None)],
  "cta": [("PRÜF MICH", "QUELLEN IN DER BESCHREIBUNG", None)],
 }
+if TL.get("chyrons"):
+    CHY = {}
+    for sc_, k, h, tt in TL["chyrons"]: CHY.setdefault(sc_, []).append((k, h, tt))
 def chyron(d, t, s):
     items = [(k, h, a if a is not None else s["start"] + 0.4) for k, h, a in CHY.get(s["name"], [])]
     items = [i for i in items if t >= i[2]]
@@ -221,6 +229,7 @@ for fi in ([STILL] if STILL is not None else range(NF)):
     # --- anchor animation params
     lv = float(mouth[fi]); msm = 0.55 * msm + 0.45 * lv
     a = clamp(msm * 1.15) ** 0.85
+    if os.environ.get('FORCE_A'): a = float(os.environ['FORCE_A'])
     hl = max([pulse(t, h - 0.12) for h in HLT if -0.2 < t - h < 1.5] + [0])
     q = any(w["t0"] <= t < w["t1"] + 0.4 and w["w"].endswith("?") for w in TL["words"])
     theta = 1.1 * math.sin(t * 0.55) + 0.5 * math.sin(t * 1.37 + 1) + (1.6 if q else 0) * 1.0
