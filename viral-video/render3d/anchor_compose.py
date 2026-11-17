@@ -148,11 +148,11 @@ RED, WHITE, YEL, GREY = (220, 22, 42), (248, 248, 248), (255, 214, 60), (190, 19
 def wt(scene, tok):
     for w in TL["words"]:
         if w["scene"] == scene and tok.lower() in w["w"].lower(): return w["t0"]
-    return next(s["start"] for s in SCN if s["name"] == scene)
+    return next((s["start"] for s in SCN if s["name"] == scene), 0.0)
 CHY = {
  "hook": [("DER DECODER", "WEM GEHÖRT DER HIMMEL?", None)],
  "starship": [("TEXAS · 14.11.2026", "SPACEX FÄNGT STARSHIP AUS DEM ORBIT", None), ("SPACEX", "+26 STARLINK-SATELLITEN AUSGESETZT", wt("starship", "26"))],
- "vulcan": [("FLORIDA · 15.11.2026", "ULA VULCAN STARTET FÜR AMAZON LEO", None), ("ANOMALIE NACH ~10 MIN", "40 VON 40 SATELLITEN VERLOREN", TL["events"]["anomaly"]),
+ "vulcan": [("FLORIDA · 15.11.2026", "ULA VULCAN STARTET FÜR AMAZON LEO", None), ("ANOMALIE NACH ~10 MIN", "40 VON 40 SATELLITEN VERLOREN", TL["events"].get("anomaly", 0.0)),
             ("AMAZON LEO", "398 IM ORBIT · 3.236 BENÖTIGT", wt("vulcan", "400"))],
  "connect": [("ANALYSE", "SATELLITEN = INTERNET = MACHT", None), ("UKRAINE", "STARLINK SCHALTET AB 161 KM/H AB", wt("connect", "161"))],
  "genf": [("GENF · HEUTE", "128 STAATEN VERHANDELN ÜBER KILLERROBOTER", None), ("BERICHTE · UNBESTÄTIGT", "USA & RUSSLAND GEGEN MENSCHLICHE KONTROLLE?", wt("genf", "Berichten"))],
