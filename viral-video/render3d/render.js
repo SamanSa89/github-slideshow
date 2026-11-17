@@ -12,7 +12,7 @@ const srv = http.createServer((q, r) => { const p = path.join(root, decodeURICom
   const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const p = await b.newPage({ viewport: { width: W, height: H } });
   p.on('console', m => { if (m.type() === 'error') console.error('page:', m.text()); }); p.on('pageerror', e => console.error('pageerror:', e.message));
-  await p.goto(`http://127.0.0.1:${port}/index.html?w=${W}&h=${H}&tl=./${opt('--tl') || 'work/timeline.json'}&mode=${opt('--mode') || ''}`);
+  await p.goto(`http://127.0.0.1:${port}/${opt('--page') || 'index.html'}?w=${W}&h=${H}&tl=./${opt('--tl') || 'work/timeline.json'}&mode=${opt('--mode') || ''}`);
   await p.waitForFunction('window.READY === true', null, { timeout: 120000 });
   const TLP = opt('--tl') || 'work/timeline.json'; const tl = JSON.parse(fs.readFileSync(path.join(root, TLP)));
   let times;
