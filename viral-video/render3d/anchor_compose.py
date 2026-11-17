@@ -14,7 +14,9 @@ A_PNG, M_PNG, BGF, WORK, OUT = sys.argv[1:6]
 STILL = int(sys.argv[6]) if len(sys.argv) > 6 else None
 import os
 BOARD = os.environ.get("BOARD")      # dir with transparent Leinwand frames s00000.png (foreground)
-HEYGEN = os.environ.get("HEYGEN")    # optional green-screen HeyGen video (1080x1920, anchor 1000px wide, bottom-aligned)
+HEYGEN = os.environ.get("HEYGEN")
+HGL = bool(HEYGEN)   # HeyGen layout: anchor raised, smaller board, desk bar for captions/chyron
+CAP_Y, CHY_Y, LIFT, BOARD_S = (1712, 1788, 185, 0.82) if HGL else (1560, 1700, 0, 1.0)    # optional green-screen HeyGen video (1080x1920, anchor 1000px wide, bottom-aligned)
 TL = json.load(open(f"{WORK}/timeline.json"))
 W, H, FPS = 1080, 1920, TL["fps"]
 NF = int(TL["total"] * FPS)
@@ -169,7 +171,7 @@ def chyron(d, t, s):
     k, h, a = items[-1]; lt = t - a; out = s["end"] + 0.3 - t
     p = ease(lt / 0.45) * (ease(out / 0.35) if out < 0.35 else 1)
     if p <= 0: return
-    y = 1700; x0 = 40; fk, fh = font(30), font(46)
+    y = CHY_Y; x0 = 40; fk, fh = font(30), font(46)
     hw = d.textlength(h, font=fh)
     if hw > W - 120: fh = font(int(46 * (W - 120) / hw)); hw = d.textlength(h, font=fh)
     kw = d.textlength(k, font=fk); kc = YEL if "UNBEST" in k else RED
@@ -192,7 +194,7 @@ def captions(d, t):
             f = font(64); sp = d.textlength(" ", font=f)
             tot = sum(d.textlength(w["w"], font=f) for w in g) + sp * (len(g) - 1)
             if tot > W - 120: f = font(int(64 * (W - 120) / tot)); sp = d.textlength(" ", font=f); tot = sum(d.textlength(w["w"], font=f) for w in g) + sp * (len(g) - 1)
-            x = (W - tot) / 2; y = 1560
+            x = (W - tot) / 2; y = CAP_Y
             for w in g:
                 col = RED if w["hl"] else (YEL if w["t0"] <= t < w["t1"] + 0.05 else WHITE)
                 d.text((x, y), w["w"], font=f, fill=col, stroke_width=5, stroke_fill=(0, 0, 0)); x += d.textlength(w["w"], font=f) + sp
@@ -251,7 +253,7 @@ for fi in ([STILL] if STILL is not None else range(NF)):
         tw, th_ = int(1080 * k), int(1920 * k)
         pr = cv2.resize(hg, (tw, th_), interpolation=cv2.INTER_AREA)
         face_y = H - (PERSON.shape[0] - FACE[1]) * sc + 6 * c
-        px = int(540 + sway - HG_FACE[0] * k); py = int(face_y - HG_FACE[1] * k)
+        px = int(540 + sway - HG_FACE[0] * k); py = int(face_y - HG_FACE[1] * k) - LIFT
     # --- background with zoom/parallax + DOF
     try:
         bg = Image.open(f"{BGF}/f{fi:05d}.jpg").convert("RGB"); lastbg = bg
@@ -271,12 +273,17 @@ for fi in ([STILL] if STILL is not None else range(NF)):
     img_o = Image.fromarray(np.clip(frame, 0, 255).astype(np.uint8))
     if BOARD:
         try:
-            bd = Image.open(f"{BOARD}/s{fi:05d}.png"); img_o.paste(bd, (0, 95), bd)
+            bd = Image.open(f"{BOARD}/s{fi:05d}.png")
+            if BOARD_S != 1.0: bd = bd.resize((int(bd.width * BOARD_S), int(bd.height * BOARD_S)), Image.LANCZOS)
+            img_o.paste(bd, ((W - bd.width) // 2, 95), bd)
         except FileNotFoundError:
             pass
     ov = Image.new("RGBA", (W, H)); d = ImageDraw.Draw(ov)
     for i in range(0, 420, 10): d.rectangle([0, H - 420 + i, W, H - 410 + i], fill=(0, 0, 20, int(120 * i / 420)))
     ov.alpha_composite(TOPBAR)
+    if HGL:   # news desk bar covering the cut edge of the anchor
+        for i in range(0, 230, 5): d.rectangle([0, 1690 + i, W, 1695 + i], fill=(6, 18, 52, min(255, 200 + i)))
+        d.rectangle([0, 1688, W, 1694], fill=RED + (255,))
     if int(t * 1.6) % 2 == 0: d.ellipse([36, 34, 60, 58], fill=RED)
     chyron(d, t, s); captions(d, t)
     d.rectangle([0, H - 8, int(W * t / TL["total"]), H], fill=RED)
