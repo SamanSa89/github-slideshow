@@ -78,6 +78,10 @@ def wav_write(p, x):
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((np.clip(x, -1, 1) * 32767).astype(np.int16).tobytes())
 def wav_read(p):
     with wave.open(p) as w: return np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(np.float32) / 32768
+if os.environ.get("VOICE_OVERRIDE"):   # e.g. speech-to-speech conversion of voice_raw.wav (same timing)
+    subprocess.run(["ffmpeg", "-loglevel", "error", "-y", "-i", os.environ["VOICE_OVERRIDE"], "-ac", "1", "-ar", str(SR), f"{WORK}/override.wav"], check=True)
+    with wave.open(f"{WORK}/override.wav") as w_: O = np.frombuffer(w_.readframes(w_.getnframes()), np.int16).astype(np.float32) / 32768
+    V = np.pad(O, (0, max(0, N - len(O))))[:N]
 wav_write(f"{WORK}/voice_raw.wav", V)
 subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", f"{WORK}/voice_raw.wav", "-af",
                 "highpass=f=70,equalizer=f=120:t=q:w=1:g=2,acompressor=threshold=-20dB:ratio=2.5:attack=5:release=120:makeup=2", f"{WORK}/voice.wav"], check=True)
