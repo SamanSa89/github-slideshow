@@ -20,7 +20,7 @@ const srv = http.createServer((q, r) => { const p = path.join(root, decodeURICom
   for (let i = 0; i < times.length; i++) {
     const pen = await p.evaluate(t => window.renderAt(t), times[i]); penLog.push([times[i], pen]);
     const name = opt('--times') ? `still_${times[i]}.png` : `s${String(Math.round(times[i] * tl.fps)).padStart(5, '0')}.png`;
-    await el.screenshot({ path: path.join(out, name), omitBackground: true });
+    if (!opt('--penonly')) await el.screenshot({ path: path.join(out, name), omitBackground: true });
     if (i % 200 === 0) console.log(`frame ${i}/${times.length} ${((Date.now() - t0) / (i + 1)).toFixed(0)} ms/frame`);
   }
   fs.writeFileSync(path.join(out, 'pen.json'), JSON.stringify(penLog));

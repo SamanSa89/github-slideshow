@@ -260,7 +260,7 @@ for fi in ([STILL] if STILL is not None else range(NF)):
         bg = Image.open(f"{BGF}/f{fi:05d}.jpg").convert("RGB"); lastbg = bg
     except FileNotFoundError:
         bg = lastbg if lastbg is not None else Image.new("RGB", (720, 1280), (6, 20, 60))
-    z = 1.04 + 0.16 * c
+    z = (1.0 + 0.02 * c) if HGL else (1.04 + 0.16 * c)
     bw_, bh_ = int(W * z), int(H * z)
     bgr = np.asarray(bg.resize((bw_, bh_), Image.BILINEAR))
     ox = int(min(max((bw_ - W) / 2 - sway * 0.35, 0), bw_ - W)); oy = int((bh_ - H) * 0.35)
