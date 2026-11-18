@@ -1,0 +1,25 @@
+{
+ "scenes": [
+  ["hook", "{4:07 a.m.,|Four oh seven a.m.,} Japan time. While you were asleep, two Russian military aircraft entered Japan's *airspace.* And then they didn't turn back."],
+  ["route", "Three minutes over the island of Okinoshima. Japan scrambles *fighter jets* and radios warnings. But instead of heading home, they keep going: through the Tsushima Strait, past South Korea, which also scrambles jets, through the gap between Yonaguni and *Taiwan.* Taiwan tracks them off its east coast. Then they turn toward the Pacific. And Moscow? *Silence.*"],
+  ["china", "At the same time, Taiwan counts more than {100|a hundred} Chinese warships and coast guard vessels across the Western Pacific, with no announcement. One Taiwanese official even claims a submarine fired an *intercontinental* ballistic missile. That is *not* confirmed."],
+  ["timing", "Now look at the timing: all of this happens hours before Trump, Xi and Putin meet in *Shenzhen* on {November 19th.|November nineteenth.} Without Europe at the table."],
+  ["decode", "Online, you're reading right now: and on top of that, the *cyberattacks* on America! I checked. US officials blame the nationwide ground stop on a technical failure, not an attack. Anyone connecting the two is telling you a *story,* not an analysis."],
+  ["fazit", "The real message is clear enough. Russia and China are showing what they can do before the summit. A signal to Washington, Tokyo and Taipei. This isn't a secret plan. It's *leverage.*"],
+  ["cta", "So: don't trust me. *Verify me.* Sources are in the description. I'm The Decoder. See you after Shenzhen."]
+ ],
+ "booms": [["china", "intercontinental"], ["cta", "Verify"]],
+ "riser": "fazit",
+ "events": {"rakete": ["china", "intercontinental"]},
+ "chyrons": [
+  ["hook", "NOV 17, 2026 · 4:07 AM JST", "RUSSIAN MILITARY JETS IN JAPAN'S AIRSPACE", null],
+  ["route", "ROUTE PER JAPAN & TAIWAN", "OKINOSHIMA → TSUSHIMA → YONAGUNI → PACIFIC", null],
+  ["route", "TOKYO", "PROTEST TO MOSCOW · MOSCOW SILENT", "Moscow"],
+  ["china", "PER TAIWAN", "100+ CHINESE VESSELS IN THE WESTERN PACIFIC", null],
+  ["china", "ANONYMOUS SOURCE · UNCONFIRMED", "ICBM TEST FROM A SUBMARINE?", "claims"],
+  ["timing", "SHENZHEN · NOV 19", "TRUMP · XI · PUTIN — WITHOUT EUROPE", null],
+  ["decode", "FACT CHECK", "“CYBERATTACKS”? OFFICIALS: TECHNICAL FAILURE", null],
+  ["fazit", "ANALYSIS", "SHOW OF FORCE AHEAD OF THE SUMMIT", null],
+  ["cta", "VERIFY ME", "SOURCES IN THE DESCRIPTION", null]
+ ]
+}

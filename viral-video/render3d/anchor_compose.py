@@ -16,7 +16,8 @@ import os
 BOARD = os.environ.get("BOARD")      # dir with transparent Leinwand frames s00000.png (foreground)
 HEYGEN = os.environ.get("HEYGEN")
 HGL = bool(HEYGEN)   # HeyGen layout: anchor raised, smaller board, desk bar for captions/chyron
-CAP_Y, CHY_Y, LIFT, BOARD_S = (1712, 1788, 185, 0.82) if HGL else (1560, 1700, 0, 1.0)    # optional green-screen HeyGen video (1080x1920, anchor 1000px wide, bottom-aligned)
+CAP_Y, CHY_Y, LIFT, BOARD_S = (1712, 1788, 150, 0.76) if HGL else (1560, 1700, 0, 1.0)
+LANG = os.environ.get('LANG_UI', 'de')    # optional green-screen HeyGen video (1080x1920, anchor 1000px wide, bottom-aligned)
 TL = json.load(open(f"{WORK}/timeline.json"))
 W, H, FPS = 1080, 1920, TL["fps"]
 NF = int(TL["total"] * FPS)
@@ -174,7 +175,7 @@ def chyron(d, t, s):
     y = CHY_Y; x0 = 40; fk, fh = font(30), font(46)
     hw = d.textlength(h, font=fh)
     if hw > W - 120: fh = font(int(46 * (W - 120) / hw)); hw = d.textlength(h, font=fh)
-    kw = d.textlength(k, font=fk); kc = YEL if "UNBEST" in k else RED
+    kw = d.textlength(k, font=fk); kc = YEL if ("UNBEST" in k or "UNCONFIRMED" in k) else RED
     d.rectangle([x0, y + 50, x0 + int((hw + 60) * p), y + 128], fill=(255, 255, 255, 240))
     d.rectangle([x0, y + 50, x0 + 8, y + 128], fill=RED)
     d.rectangle([x0, y, x0 + int((kw + 36) * p), y + 50], fill=kc + (255,))
@@ -201,8 +202,8 @@ def captions(d, t):
             return
 TOPBAR = Image.new("RGBA", (W, 96)); td = ImageDraw.Draw(TOPBAR)
 td.rectangle([0, 0, W, 96], fill=(4, 14, 48, 200)); td.rectangle([0, 92, W, 96], fill=RED)
-td.text((80, 24), "DER DECODER", font=font(40), fill=WHITE)
-lab = "KI-GENERIERT"; td.text((W - 40 - td.textlength(lab, font=font(28, False)), 32), lab, font=font(28, False), fill=GREY)
+td.text((80, 24), "THE DECODER" if LANG == "en" else "DER DECODER", font=font(40), fill=WHITE)
+lab = "AI-GENERATED" if LANG == "en" else "KI-GENERIERT"; td.text((W - 40 - td.textlength(lab, font=font(28, False)), 32), lab, font=font(28, False), fill=GREY)
 
 # ------------------------------------------------------------------ frame loop
 ff = None

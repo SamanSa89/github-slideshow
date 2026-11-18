@@ -253,17 +253,26 @@ const FONT = 'DejaVu Sans, sans-serif';
 function wallDrawBG(t, s) {
   const c = wctx, lt = t - s.start;
   const g = c.createLinearGradient(0, 0, 0, 1024); g.addColorStop(0, '#0a2a7a'); g.addColorStop(0.6, '#06205e'); g.addColorStop(1, '#041437'); c.fillStyle = g; c.fillRect(0, 0, 1024, 1024);
-  c.globalAlpha = 0.9; c.drawImage(MAPIMG, 560, 380, 300, 440); c.globalAlpha = 1;
-  // brand panel left
-  c.save(); c.translate(345, 640); c.scale(0.5, 0.5);
-  c.font = `bold 64px ${FONT}`; c.textAlign = 'left'; c.fillStyle = '#ffffff'; c.fillText('DER', -150, -60);
-  c.fillStyle = '#d4142a'; c.beginPath(); c.moveTo(-170, -30); c.lineTo(300, -30); c.lineTo(280, 70); c.lineTo(-190, 70); c.closePath(); c.fill();
-  c.font = `bold 78px ${FONT}`; c.fillStyle = '#fff'; c.fillText('DECODER', -160, 48);
-  c.font = `bold 26px ${FONT}`; c.fillStyle = '#e8eefc'; c.fillText('FRAGEN · PRÜFEN · DECODEN', -160, 120);
-  c.restore();
+  const EN = params.get('lang') === 'en';
+  c.globalAlpha = 0.85; c.drawImage(MAPIMG, 600, 520, 300, 420); c.globalAlpha = 1;
+  // BREAKING NEWS band at the anchor's eye line (visible left and right of the head)
+  const blink = 0.75 + 0.25 * Math.sin(t * 5);
+  c.fillStyle = '#0b1d52'; c.fillRect(0, 372, 1024, 112);
+  c.fillStyle = `rgba(212,20,42,${blink})`; c.fillRect(208, 380, 166, 96);
+  c.fillStyle = '#ffffff'; c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+  c.font = `bold 28px ${FONT}`; c.fillText('BREAKING', 218, 418); c.fillText('NEWS', 218, 456);
+  c.fillStyle = '#ffffff'; c.fillRect(592, 380, 178, 96);
+  c.font = `bold 20px ${FONT}`; c.fillStyle = '#0b1d52'; c.fillText(EN ? 'THE' : 'DER', 602, 404);
+  c.fillStyle = '#d4142a'; c.fillRect(600, 412, 162, 50);
+  c.font = `bold 30px ${FONT}`; c.fillStyle = '#ffffff'; c.fillText('DECODER', 606, 449);
+  // ticker strip
+  c.fillStyle = '#d4142a'; c.fillRect(0, 486, 1024, 30);
+  const tk = (EN ? '  THE DECODER  •  BREAKING NEWS  •  VERIFY ME  •' : '  DER DECODER  •  BREAKING NEWS  •  PRÜF MICH  •').repeat(6);
+  c.font = `bold 20px ${FONT}`; c.fillStyle = '#ffffff'; c.fillText(tk, -((t * 60) % 520), 508);
   // moving light streak
   const x = ((t * 90) % 1400) - 200; const lg = c.createLinearGradient(x - 120, 0, x + 120, 0); lg.addColorStop(0, 'rgba(120,180,255,0)'); lg.addColorStop(0.5, 'rgba(120,180,255,0.16)'); lg.addColorStop(1, 'rgba(120,180,255,0)'); c.fillStyle = lg; c.fillRect(0, 0, 1024, 1024);
   c.fillStyle = '#d4142a'; c.fillRect(0, 960, 1024, 10); c.fillStyle = '#3a8dff'; c.fillRect(0, 60, 1024, 8);
+  if (params.get('calib')) { [[200,'#00ffff'],[350,'#00ff00'],[500,'#ffff00'],[650,'#ff00ff'],[800,'#ffffff']].forEach(([y,c])=>{ const c_=wctx; c_.fillStyle=c; c_.fillRect(0,y,1024,30); c_.fillStyle='#000'; c_.font='bold 28px sans-serif'; for(let x=0;x<1024;x+=128){c_.fillText(String(x),x+4,y+26);} }); }
   wallTex.needsUpdate = true;
 }
 function wallDraw(t, s) {
@@ -369,6 +378,7 @@ if (BGMODE) {
   scene.background = new THREE.Color(0x041233); scene.fog = new THREE.Fog(0x041233, 7, 16);
   wall.material.emissiveIntensity = 0.75; floor.material.color.setHex(0x0a1430);
   stage.position.set(0, 2.62, 0.3); stage.scale.setScalar(0.78);
+  if (params.get('noprops')) stage.visible = false;
 }
 function animCameraBG(t, s) {
   camera.position.set(Math.sin(t * 0.17) * 0.18, 2.2 + Math.sin(t * 0.23) * 0.03, 3.6);

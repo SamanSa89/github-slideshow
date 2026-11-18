@@ -16,12 +16,13 @@ const srv = http.createServer((q, r) => { const p = path.join(root, decodeURICom
   let times;
   if (opt('--times')) times = opt('--times').split(',').map(Number);
   else { const f0 = +(opt('--from') || 0), f1 = +(opt('--to') || Math.floor(tl.total * tl.fps)); times = []; for (let f = f0; f < f1; f++) times.push(f / tl.fps); }
-  const el = await p.$('#stage'); const t0 = Date.now();
+  const el = await p.$('#stage'); const t0 = Date.now(); const penLog = [];
   for (let i = 0; i < times.length; i++) {
-    await p.evaluate(t => window.renderAt(t), times[i]);
+    const pen = await p.evaluate(t => window.renderAt(t), times[i]); penLog.push([times[i], pen]);
     const name = opt('--times') ? `still_${times[i]}.png` : `s${String(Math.round(times[i] * tl.fps)).padStart(5, '0')}.png`;
     await el.screenshot({ path: path.join(out, name), omitBackground: true });
     if (i % 200 === 0) console.log(`frame ${i}/${times.length} ${((Date.now() - t0) / (i + 1)).toFixed(0)} ms/frame`);
   }
+  fs.writeFileSync(path.join(out, 'pen.json'), JSON.stringify(penLog));
   await b.close(); srv.close();
 })();
