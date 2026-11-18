@@ -9,7 +9,7 @@ YouTube-Pronomen sind freiwillig und gelten für den **Kanal bzw. die Person dah
 Empfehlung: **leer lassen.** The Decoder ist eine KI-Moderatorfigur; die Transparenz dazu steht in der Beschreibung.
 Alternative, falls die Figur als Persona auftreten soll: **he/him** (wie sie im Video spricht und aussieht).
 
-## Kanalbeschreibung – Englisch (Hauptsprache, 964 Zeichen)
+## Kanalbeschreibung – Englisch (Hauptsprache, ca. 850 von max. 1000 Zeichen)
 > Breaking news, decoded.
 >
 > The Decoder takes the stories everyone is sharing – airspace incursions, rocket launches, summits, viral claims – and does what most feeds don't: checks them.
