@@ -20,7 +20,7 @@ img = Image.fromarray(bg).convert("RGBA")
 
 # anchor: head & shoulders, face slightly above centre (round crop keeps it)
 an = Image.open(A).convert("RGB"); m = Image.open(MASK).convert("L")
-s = 0.82; face = (1305, 470); target = (400, 360)
+s = 0.9; face = (1305, 520); target = (400, 380)
 an = an.resize((int(an.width * s), int(an.height * s)), Image.LANCZOS); m = m.resize(an.size, Image.LANCZOS)
 ox, oy = int(target[0] - face[0] * s), int(target[1] - face[1] * s)
 rim = Image.new("RGBA", (S, S)); rim.paste((120, 180, 255, 140), (ox, oy - 4), m.filter(ImageFilter.MaxFilter(11)))
@@ -29,9 +29,9 @@ img.paste(an, (ox, oy), m)
 
 # red ring + "THE DECODER" band at the bottom (inside the circle)
 d = ImageDraw.Draw(img, "RGBA")
-d.rectangle([0, 600, S, 690], fill=RED + (240,))
-f = ImageFont.truetype(FD, 64)
-d.text((S / 2, 646), "THE DECODER", font=f, fill=WHITE, anchor="mm")
+if "--band" in sys.argv:
+    d.rectangle([0, 600, S, 690], fill=RED + (240,))
+    d.text((S / 2, 646), "THE DECODER", font=ImageFont.truetype(FD, 64), fill=WHITE, anchor="mm")
 ring = Image.new("L", (S, S), 0); ImageDraw.Draw(ring).ellipse([6, 6, S - 6, S - 6], outline=255, width=22)
 img.paste(RED, (0, 0), ring)
 
