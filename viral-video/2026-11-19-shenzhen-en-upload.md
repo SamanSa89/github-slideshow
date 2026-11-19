@@ -1,6 +1,6 @@
 # Upload-Paket – „Shenzhen: Who Won the Room?“ (The Decoder, EN · 19.11.2026)
 
-**Video:** `shenzhen_en.mp4` (Brian, ca. 1:31, 9:16 → YouTube Short) – eigener Moderator, ohne HeyGen
+**Video:** `shenzhen_en.mp4` (Brian, ca. 1:31, 9:16 → YouTube Short) – Moderator: Gestik/Mimik aus dem bezahlten HeyGen-Video + eigene Lippensynchronisation (keine neuen HeyGen-Kosten); Tafel mit OpenMoji-Icons
 **Skript:** `render3d/episodes/2026-11-19-shenzhen-en.json`
 **Cover (Short):** `branding/shorts-cover-shenzhen-en-1080x1920.jpg` · **Thumbnail 16:9:** `branding/thumbnail-shenzhen-en-1280x720.jpg`
 
@@ -43,6 +43,7 @@ Sources:
 
 Don't trust me. Verify me.
 The Decoder is an AI-generated news presenter. Script researched and fact-checked; the verdict is analysis.
+Icons: OpenMoji – openmoji.org (CC BY-SA 4.0)
 
 #Shorts #Shenzhen #Trump #XiJinping #Putin #Geopolitics #FactCheck
 ```
