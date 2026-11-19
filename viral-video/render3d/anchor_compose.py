@@ -15,7 +15,7 @@ STILL = int(sys.argv[6]) if len(sys.argv) > 6 else None
 import os
 BOARD = os.environ.get("BOARD")      # dir with transparent Leinwand frames s00000.png (foreground)
 HEYGEN = os.environ.get("HEYGEN")
-HGL = bool(HEYGEN)   # HeyGen layout: anchor raised, smaller board, desk bar for captions/chyron
+HGL = bool(HEYGEN) or os.environ.get('DESK') == '1'   # HeyGen layout: anchor raised, smaller board, desk bar for captions/chyron
 CAP_Y, CHY_Y, LIFT, BOARD_S = (1712, 1788, 150, 0.76) if HGL else (1560, 1700, 0, 1.0)
 LANG = os.environ.get('LANG_UI', 'de')    # optional green-screen HeyGen video (1080x1920, anchor 1000px wide, bottom-aligned)
 TL = json.load(open(f"{WORK}/timeline.json"))
@@ -248,7 +248,7 @@ for fi in ([STILL] if STILL is not None else range(NF)):
         ph, pw = person.shape[:2]
         tw, th_ = int(pw * sc), int(ph * sc * breath)
         pr = cv2.resize(person, (tw, th_), interpolation=cv2.INTER_AREA)
-        px = int(540 + sway - FACE[0] * sc); py = H - th_ + int(6 * c)
+        px = int(540 + sway - FACE[0] * sc); py = H - th_ + int(6 * c) - max(0, LIFT - 40)
     else:
         k = sc / HG_S0
         tw, th_ = int(1080 * k), int(1920 * k)

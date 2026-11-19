@@ -1,0 +1,25 @@
+{
+ "scenes": [
+  ["hook", "Trump, Xi and Putin just sat in one room in *Shenzhen.* Viral posts say Trump *lost* before he even sat down. Let's decode what actually happened."],
+  ["before", "One day earlier, Xi met Putin first. Xi said China and Russia should *lead* the push toward a multipolar world, and called their ties steady as a mountain. The order matters: the host met his partner before the American arrived."],
+  ["summit", "Then the three-way meeting. About an hour. The result: a four-point declaration on nuclear risk, and the line that a nuclear war cannot be won. But no deal on *Ukraine,* none on Iran, no cuts to nuclear arsenals. Putin even ruled out direct talks with Kyiv. Trump called it a twelve out of ten."],
+  ["iran", "On Iran, Beijing had already shown its hand. In September, China and Russia *vetoed* a US-drafted Security Council resolution on monitoring Iran sanctions."],
+  ["claims", "Now the viral version. Did Xi personally greet Trump at the airport? I found *no* report confirming that. And is this a new G3 running the world? Even Chinese analysts say no. It's *risk management,* not a world government."],
+  ["verdict", "So did Trump fail? The optics went to Beijing: its city, its sequence, its language. The substance went to nobody, yet. Shenzhen didn't create a G3. It showed that no big crisis gets solved without all *three.*"],
+  ["cta", "Don't trust me. *Verify me.* Sources are in the description. I'm The Decoder."]
+ ],
+ "booms": [["summit", "Ukraine"], ["cta", "Verify"]],
+ "riser": "verdict",
+ "events": {"veto": ["iran", "vetoed"]},
+ "chyrons": [
+  ["hook", "SHENZHEN · NOV 19, 2026", "TRUMP · XI · PUTIN: WHO WON THE ROOM?", null],
+  ["before", "NOV 18 · DAY BEFORE", "XI MEETS PUTIN FIRST — “LEAD A MULTIPOLAR WORLD”", null],
+  ["summit", "TRILATERAL · ~1 HOUR", "4-POINT DECLARATION ON NUCLEAR RISK", null],
+  ["summit", "WHAT'S MISSING", "NO DEAL ON UKRAINE · IRAN · ARSENALS", "Ukraine"],
+  ["iran", "UN SECURITY COUNCIL · SEPT 17", "CHINA & RUSSIA VETO US IRAN-SANCTIONS DRAFT", null],
+  ["claims", "VIRAL CLAIM · UNCONFIRMED", "XI GREETED TRUMP AT THE AIRPORT? NO REPORT FOUND", null],
+  ["claims", "CHINESE ANALYSTS", "“RISK MANAGEMENT, NOT A G3”", "G3"],
+  ["verdict", "ANALYSIS", "OPTICS: BEIJING · SUBSTANCE: NOBODY (YET)", null],
+  ["cta", "VERIFY ME", "SOURCES IN THE DESCRIPTION", null]
+ ]
+}

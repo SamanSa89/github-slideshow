@@ -61,7 +61,77 @@ const sat = (x, y, s, t0, col = INK) => { draw(rc.rectangle(x - s * 0.3, y - s *
 const highlight = (x, y, w, h, t0) => draw(rc.rectangle(x, y, w, h, { stroke: 'none', fill: YEL, fillStyle: 'zigzag', hachureGap: 7, fillWeight: 14, roughness: 1.6, seed: seed++ }), t0, 0.5, YEL);
 
 // ------------------------------------------------------------------ scenes
-if (EP === 'airspace_en') {
+if (EP === 'shenzhen_en') {
+const seat = (x, y, label, col, t0, below = true) => { draw(rc.circle(x, y, 70, o({ stroke: col, strokeWidth: 4 })), t0, 0.35, col); text(label, x, below ? y + 75 : y - 50, 44, col, t0 + 0.15, 0.4, 'middle'); };
+const stamp = (txt, cx, cy, w, col, t0, rot = -7) => { const st = document.createElementNS(NS, 'g'); st.setAttribute('transform', `rotate(${rot} ${cx} ${cy})`); CUR.g.appendChild(st);
+  const n = rc.rectangle(cx - w / 2, cy - 45, w, 90, o({ stroke: col, strokeWidth: 7 })); st.appendChild(n); draw(n, t0, 0.35, col); st.appendChild(CUR.g.lastChild);
+  text(txt, cx, cy + 20, 56, col, t0 + 0.2, 0.45, 'middle', rot); };
+
+CUR = SC.hook;
+draw(rc.circle(480, 290, 300, o({ fill: '#c9b38a', fillStyle: 'hachure', hachureGap: 9 })), wt('Trump', 0, -0.3), 0.7);
+seat(480, 95, 'Trump', BLUE, wt('Trump'), false); seat(290, 410, 'Xi', RED, wt('Xi')); seat(670, 410, 'Putin', RED, wt('Putin'));
+text('SHENZHEN', 480, 305, 60, RED, wt('Shenzhen', 0, -0.2), 0.6, 'middle');
+highlight(250, 590, 460, 80, wt('lost', 0, -0.3));
+text('Trump lost?', 480, 655, 80, INK, wt('lost', 0, -0.2), 0.6, 'middle');
+text('let’s decode →', 700, 700, 40, BLUE, wt('decode'), 0.6);
+
+CUR = SC.before;
+draw(rc.rectangle(60, 60, 200, 170, o()), wt('earlier', 0, -0.4), 0.5); draw(rc.rectangle(60, 60, 200, 45, o({ stroke: RED, fill: RED, fillStyle: 'hachure', hachureGap: 6 })), wt('earlier', 0, -0.1), 0.3, RED);
+text('Nov 18', 75, 185, 64, INK, wt('earlier'));
+seat(380, 170, 'Xi', RED, wt('Xi')); seat(600, 170, 'Putin', RED, wt('Putin'));
+draw(rc.line(415, 170, 565, 170, o({ stroke: RED, strokeWidth: 5 })), wt('Putin', 0, 0.3), 0.4, RED);
+text('LEAD → multipolar world', 60, 360, 56, RED, wt('lead', 0, -0.2));
+draw(rc.path('M 300 560 L 400 430 L 450 480 L 520 400 L 640 560 Z', o({ fill: '#b7c7a6', fillStyle: 'hachure', hachureGap: 8 })), wt('mountain', 0, -0.5), 0.7);
+text('“steady as a mountain”', 300, 610, 46, INK, wt('mountain', 0, -0.1));
+text('Nov 19: Trump arrives →', 470, 690, 46, BLUE, wt('American', 0, -0.4));
+
+CUR = SC.summit;
+draw(rc.rectangle(60, 50, 330, 400, o({ fill: '#ffffff', fillStyle: 'solid' })), wt('three-way', 0, -0.2), 0.6);
+text('Declaration', 90, 110, 48, INK, wt('four-point', 0, -0.3));
+for (let i = 0; i < 4; i++) { text(`${i + 1}.`, 90, 180 + i * 70, 40, INK, wt('four-point') + i * 0.15, 0.2); draw(rc.line(130, 170 + i * 70, 360, 170 + i * 70, o({ strokeWidth: 2 })), wt('four-point') + i * 0.15, 0.3); }
+text('nuclear risk', 450, 110, 50, INK, wt('nuclear', 0, -0.2)); check(760, 85, 46, wt('nuclear', 0, 0.4));
+text('“no winners in a nuclear war”', 450, 170, 34, '#555', wt('won', 0, -0.4));
+[['Ukraine', 'Ukraine', 250], ['Iran', 'Iran', 330], ['arsenal cuts', 'arsenals', 410]].forEach(([lab, tok, y]) => { text(lab, 450, y, 50, INK, wt(tok, 0, -0.2)); cross(760, y - 40, 44, wt(tok, 0, 0.2)); });
+text('Putin: no direct talks with Kyiv', 60, 540, 46, RED, wt('Kyiv', 0, -0.6));
+highlight(60, 590, 470, 95, wt('twelve', 0, -0.3));
+text('Trump: “12 / 10”', 75, 665, 76, BLUE, wt('twelve', 0, -0.2));
+
+CUR = SC.iran;
+text('IRAN', 60, 110, 90, INK, wt('Iran', 0, -0.2));
+text('UN Security Council · Sept 17', 60, 190, 46, BLUE, wt('September', 0, -0.2));
+draw(rc.path('M 200 480 A 280 200 0 0 1 760 480', o({ strokeWidth: 6 })), wt('Beijing'), 0.6);
+text('China', 230, 420, 54, RED, wt('China')); text('Russia', 600, 420, 54, RED, wt('Russia'));
+text('US draft: monitor Iran sanctions', 120, 560, 46, INK, wt('Security', 0, -0.2));
+draw(rc.line(110, 545, 760, 540, o({ stroke: RED, strokeWidth: 6 })), wt('sanctions', 0, 0.2), 0.4, RED);
+stamp('VETO', 770, 110, 250, RED, TL.events.veto - 0.1, -9);
+
+CUR = SC.claims;
+text('VIRAL CLAIM:', 60, 90, 56, RED, wt('viral', 0, -0.2));
+text('“Xi greeted Trump at the airport”', 60, 170, 50, INK, wt('airport', 0, -0.8));
+draw(rc.circle(820, 120, 120, o({ stroke: BLUE, strokeWidth: 5 })), wt('found', 0, -0.3), 0.4, BLUE); draw(rc.line(862, 162, 930, 230, o({ stroke: BLUE, strokeWidth: 9 })), wt('found'), 0.3, BLUE);
+stamp('NO REPORT FOUND', 480, 280, 560, '#e0a100', wt('report', 0, -0.1), -5);
+text('“A new G3 runs the world”?', 60, 440, 52, INK, wt('G3', 0, -0.4));
+draw(rc.line(55, 425, 690, 420, o({ stroke: RED, strokeWidth: 6 })), wt('say', 0, 0.1), 0.4, RED);
+highlight(60, 540, 520, 90, wt('risk', 0, -0.3));
+text('= risk management', 75, 610, 70, INK, wt('risk', 0, -0.2));
+text('(Chinese analysts)', 610, 610, 38, '#555', wt('risk', 0, 0.6));
+
+CUR = SC.verdict;
+text('Did Trump fail?', 60, 95, 64, INK, wt('fail', 0, -0.5));
+draw(rc.line(480, 245, 480, 480, o({ strokeWidth: 6 })), wt('optics', 0, -0.4), 0.4); draw(rc.polygon([[430, 520], [530, 520], [480, 475]], o()), wt('optics', 0, -0.2), 0.3);
+draw(rc.line(220, 270, 740, 220, o({ strokeWidth: 6 })), wt('optics', 0, -0.1), 0.4);
+draw(rc.path('M 140 290 Q 220 400 300 290', o({ stroke: RED })), wt('optics'), 0.4, RED); text('OPTICS', 220, 450, 40, RED, wt('optics', 0, 0.2), null, 'middle'); text('→ Beijing', 220, 515, 52, RED, wt('Beijing'), null, 'middle');
+draw(rc.path('M 660 240 Q 740 350 820 240', o({ stroke: BLUE })), wt('substance'), 0.4, BLUE); text('SUBSTANCE', 740, 400, 40, BLUE, wt('substance', 0, 0.2), null, 'middle'); text('→ nobody (yet)', 740, 465, 48, BLUE, wt('nobody'), null, 'middle');
+highlight(60, 600, 840, 85, wt('three', 0, -0.4));
+text('No G3 – but no deal without all 3', 75, 665, 60, INK, wt('three', 0, -0.3));
+
+CUR = SC.cta;
+highlight(150, 170, 660, 120, wt('Verify', 0, -0.3));
+text('VERIFY ME!', 480, 270, 130, RED, wt('Verify', 0, -0.1), 0.7, 'middle');
+draw(rc.ellipse(480, 225, 760, 210, o({ stroke: RED, strokeWidth: 5 })), wt('Verify', 0, 0.5), 0.6, RED);
+text('Sources ↓ in the description', 480, 460, 58, INK, wt('Sources'), 1.0, 'middle');
+text('THE DECODER', 480, 600, 64, BLUE, wt('Decoder', 0, -0.2), 0.8, 'middle');
+} else if (EP === 'airspace_en') {
 
 const jet = (x, y, ang, sz, t0, col = RED) => {   // top-view jet, nose pointing to ang (rad)
   const P = [[0, -1], [0.12, -0.55], [0.12, -0.15], [0.75, 0.25], [0.75, 0.38], [0.12, 0.2], [0.1, 0.62], [0.35, 0.8], [0.35, 0.9], [0, 0.82], [-0.35, 0.9], [-0.35, 0.8], [-0.1, 0.62], [-0.12, 0.2], [-0.75, 0.38], [-0.75, 0.25], [-0.12, -0.15], [-0.12, -0.55]];
