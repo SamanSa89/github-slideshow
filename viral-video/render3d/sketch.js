@@ -61,6 +61,17 @@ const sat = (x, y, s, t0, col = INK) => { draw(rc.rectangle(x - s * 0.3, y - s *
 const highlight = (x, y, w, h, t0) => draw(rc.rectangle(x, y, w, h, { stroke: 'none', fill: YEL, fillStyle: 'zigzag', hachureGap: 7, fillWeight: 14, roughness: 1.6, seed: seed++ }), t0, 0.5, YEL);
 
 // ------------------------------------------------------------------ scenes
+// ---- OpenMoji picture icons (CC BY-SA 4.0, openmoji.org), inlined SVG, pop-in animation
+const ICON_LOADS = [];
+function icon(code, x, y, size, t0, rot = 0) {
+  const g = document.createElementNS(NS, 'g'); g.style.opacity = 0; CUR.g.appendChild(g);
+  ICON_LOADS.push(fetch(`./node_modules/openmoji/color/svg/${code}.svg`).then(r => r.text()).then(txt => {
+    const doc = new DOMParser().parseFromString(txt, 'image/svg+xml'); const root = doc.documentElement;
+    for (const ch of [...root.childNodes]) g.appendChild(document.importNode(ch, true));
+  }));
+  CUR.items.push({ kind: 'icon', node: g, x, y, size, rot, t0, dur: 0.35 });
+  return g;
+}
 if (EP === 'shenzhen_en') {
 const seat = (x, y, label, col, t0, below = true) => { draw(rc.circle(x, y, 70, o({ stroke: col, strokeWidth: 4 })), t0, 0.35, col); text(label, x, below ? y + 75 : y - 50, 44, col, t0 + 0.15, 0.4, 'middle'); };
 const stamp = (txt, cx, cy, w, col, t0, rot = -7) => { const st = document.createElementNS(NS, 'g'); st.setAttribute('transform', `rotate(${rot} ${cx} ${cy})`); CUR.g.appendChild(st);
@@ -75,6 +86,9 @@ highlight(250, 590, 460, 80, wt('lost', 0, -0.3));
 text('Trump lost?', 480, 655, 80, INK, wt('lost', 0, -0.2), 0.6, 'middle');
 text('let’s decode →', 700, 700, 40, BLUE, wt('decode'), 0.6);
 
+icon('1F1FA-1F1F8', 480, 95, 62, wt('Trump', 0, 0.1)); icon('1F1E8-1F1F3', 290, 410, 62, wt('Xi', 0, 0.1)); icon('1F1F7-1F1FA', 670, 410, 62, wt('Putin', 0, 0.1));
+icon('1F4F1', 820, 520, 150, wt('Viral', 0, -0.1), -10); icon('1F525', 905, 430, 90, wt('Viral', 0, 0.2));
+icon('1F50E', 905, 630, 80, wt('decode', 0, 0.2));
 CUR = SC.before;
 draw(rc.rectangle(60, 60, 200, 170, o()), wt('earlier', 0, -0.4), 0.5); draw(rc.rectangle(60, 60, 200, 45, o({ stroke: RED, fill: RED, fillStyle: 'hachure', hachureGap: 6 })), wt('earlier', 0, -0.1), 0.3, RED);
 text('Nov 18', 75, 185, 64, INK, wt('earlier'));
@@ -85,6 +99,9 @@ draw(rc.path('M 300 560 L 400 430 L 450 480 L 520 400 L 640 560 Z', o({ fill: '#
 text('“steady as a mountain”', 300, 610, 46, INK, wt('mountain', 0, -0.1));
 text('Nov 19: Trump arrives →', 470, 690, 46, BLUE, wt('American', 0, -0.4));
 
+icon('1F1E8-1F1F3', 380, 170, 62, wt('Xi', 0, 0.1)); icon('1F1F7-1F1FA', 600, 170, 62, wt('Putin', 0, 0.1));
+icon('1F91D', 490, 285, 120, wt('Putin', 0, 0.5)); icon('1F3D4', 800, 470, 170, wt('mountain', 0, -0.3));
+icon('1F6EC', 405, 668, 80, wt('American', 0, -0.5));
 CUR = SC.summit;
 draw(rc.rectangle(60, 50, 330, 400, o({ fill: '#ffffff', fillStyle: 'solid' })), wt('three-way', 0, -0.2), 0.6);
 text('Declaration', 90, 110, 48, INK, wt('four-point', 0, -0.3));
@@ -96,6 +113,9 @@ text('Putin: no direct talks with Kyiv', 60, 540, 46, RED, wt('Kyiv', 0, -0.6));
 highlight(60, 590, 470, 95, wt('twelve', 0, -0.3));
 text('Trump: “12 / 10”', 75, 665, 76, BLUE, wt('twelve', 0, -0.2));
 
+icon('1F4C3', 340, 90, 80, wt('four-point', 0, -0.2), 8); icon('2622', 890, 95, 78, wt('nuclear', 0, 0.1));
+icon('1F1FA-1F1E6', 890, 236, 78, wt('Ukraine', 0, 0.1)); icon('1F1EE-1F1F7', 890, 316, 78, wt('Iran', 0, 0.1));
+icon('1F1F7-1F1FA', 885, 520, 72, wt('Kyiv', 0, -0.3)); icon('1F3C6', 650, 630, 130, wt('twelve', 0, 0.1));
 CUR = SC.iran;
 text('IRAN', 60, 110, 90, INK, wt('Iran', 0, -0.2));
 text('UN Security Council · Sept 17', 60, 190, 46, BLUE, wt('September', 0, -0.2));
@@ -105,6 +125,9 @@ text('US draft: monitor Iran sanctions', 120, 560, 46, INK, wt('Security', 0, -0
 draw(rc.line(110, 545, 760, 540, o({ stroke: RED, strokeWidth: 6 })), wt('sanctions', 0, 0.2), 0.4, RED);
 stamp('VETO', 770, 110, 250, RED, TL.events.veto - 0.1, -9);
 
+icon('1F1EE-1F1F7', 340, 72, 110, wt('Iran', 0, 0.1)); icon('1F1FA-1F1F3', 600, 160, 90, wt('September', 0, 0.2));
+icon('1F1E8-1F1F3', 285, 335, 90, wt('China', 0, -0.1)); icon('1F1F7-1F1FA', 655, 335, 90, wt('Russia', 0, -0.1));
+icon('1F1FA-1F1F8', 72, 545, 70, wt('Security', 0, -0.3));
 CUR = SC.claims;
 text('VIRAL CLAIM:', 60, 90, 56, RED, wt('viral', 0, -0.2));
 text('“Xi greeted Trump at the airport”', 60, 170, 50, INK, wt('airport', 0, -0.8));
@@ -116,6 +139,9 @@ highlight(60, 540, 520, 90, wt('risk', 0, -0.3));
 text('= risk management', 75, 610, 70, INK, wt('risk', 0, -0.2));
 text('(Chinese analysts)', 610, 610, 38, '#555', wt('risk', 0, 0.6));
 
+icon('1F4F1', 480, 68, 90, wt('viral', 0, 0.1), -10); icon('1F525', 548, 58, 70, wt('viral', 0, 0.3));
+icon('1F6EC', 115, 268, 84, wt('airport', 0, -0.2)); icon('1F30F', 815, 430, 130, wt('G3', 0, -0.2));
+icon('1F6E1', 880, 560, 110, wt('risk', 0, 0.2));
 CUR = SC.verdict;
 text('Did Trump fail?', 60, 95, 64, INK, wt('fail', 0, -0.5));
 draw(rc.line(480, 245, 480, 480, o({ strokeWidth: 6 })), wt('optics', 0, -0.4), 0.4); draw(rc.polygon([[430, 520], [530, 520], [480, 475]], o()), wt('optics', 0, -0.2), 0.3);
@@ -125,12 +151,16 @@ draw(rc.path('M 660 240 Q 740 350 820 240', o({ stroke: BLUE })), wt('substance'
 highlight(60, 600, 840, 85, wt('three', 0, -0.4));
 text('No G3 – but no deal without all 3', 75, 665, 60, INK, wt('three', 0, -0.3));
 
+icon('1F1E8-1F1F3', 220, 300, 80, wt('Beijing', 0, 0.1)); icon('2753', 740, 252, 80, wt('nobody', 0, 0.1));
+icon('1F1FA-1F1F8', 700, 552, 64, wt('three', 0, 0.1)); icon('1F1E8-1F1F3', 770, 552, 64, wt('three', 0, 0.2)); icon('1F1F7-1F1FA', 840, 552, 64, wt('three', 0, 0.3));
 CUR = SC.cta;
 highlight(150, 170, 660, 120, wt('Verify', 0, -0.3));
 text('VERIFY ME!', 480, 270, 130, RED, wt('Verify', 0, -0.1), 0.7, 'middle');
 draw(rc.ellipse(480, 225, 760, 210, o({ stroke: RED, strokeWidth: 5 })), wt('Verify', 0, 0.5), 0.6, RED);
 text('Sources ↓ in the description', 480, 460, 58, INK, wt('Sources'), 1.0, 'middle');
 text('THE DECODER', 480, 600, 64, BLUE, wt('Decoder', 0, -0.2), 0.8, 'middle');
+icon('1F50E', 150, 445, 90, wt('Sources', 0, -0.2)); icon('270D', 800, 600, 90, wt('Decoder', 0, 0.1));
+
 } else if (EP === 'airspace_en') {
 
 const jet = (x, y, ang, sz, t0, col = RED) => {   // top-view jet, nose pointing to ang (rad)
@@ -440,6 +470,11 @@ window.renderAt = (t) => {
     const sc = SC[k]; const vis = sc.s === s; sc.g.style.display = vis ? '' : 'none'; if (!vis) continue;
     for (const it of sc.items) {
       const p = clamp((t - it.t0) / it.dur);
+      if (it.kind === 'icon') {
+        const sc = p > 0 ? back(p) : 0; it.node.style.opacity = p > 0 ? 1 : 0;
+        it.node.setAttribute('transform', `translate(${it.x} ${it.y}) rotate(${it.rot}) scale(${it.size / 72 * sc}) translate(-36 -36)`);
+        continue;
+      }
       if (it.kind === 'paths') {
         let L = p * it.total, cur = null;
         it.paths.forEach((pa, i) => {
@@ -459,4 +494,5 @@ window.renderAt = (t) => {
   else pen.style.display = 'none';
   return penPos ? { x: penPos.x, y: penPos.y, k: penKind } : null;
 };
+await Promise.all(ICON_LOADS);
 window.READY = true;
