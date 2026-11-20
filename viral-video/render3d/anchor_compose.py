@@ -17,6 +17,9 @@ BOARD = os.environ.get("BOARD")      # dir with transparent Leinwand frames s000
 HEYGEN = os.environ.get("HEYGEN")
 HGL = bool(HEYGEN) or os.environ.get('DESK') == '1'   # HeyGen layout: anchor raised, smaller board, desk bar for captions/chyron
 CAP_Y, CHY_Y, LIFT, BOARD_S = (1712, 1788, 150, 0.76) if HGL else (1560, 1700, 0, 1.0)
+TIKTOK = os.environ.get('TIKTOK') == '1'   # keep text out of TikTok's bottom caption overlay and right button column
+if TIKTOK: CAP_Y, CHY_Y = 1290, 1372
+TXT_W = 820 if TIKTOK else W - 120; TXT_CX = 460 if TIKTOK else W / 2
 LANG = os.environ.get('LANG_UI', 'de')    # optional green-screen HeyGen video (1080x1920, anchor 1000px wide, bottom-aligned)
 TL = json.load(open(f"{WORK}/timeline.json"))
 W, H, FPS = 1080, 1920, TL["fps"]
@@ -174,7 +177,7 @@ def chyron(d, t, s):
     if p <= 0: return
     y = CHY_Y; x0 = 40; fk, fh = font(30), font(46)
     hw = d.textlength(h, font=fh)
-    if hw > W - 120: fh = font(int(46 * (W - 120) / hw)); hw = d.textlength(h, font=fh)
+    if hw > TXT_W - 40: fh = font(int(46 * (TXT_W - 40) / hw)); hw = d.textlength(h, font=fh)
     kw = d.textlength(k, font=fk); kc = YEL if ("UNBEST" in k or "UNCONFIRMED" in k) else RED
     d.rectangle([x0, y + 50, x0 + int((hw + 60) * p), y + 128], fill=(255, 255, 255, 240))
     d.rectangle([x0, y + 50, x0 + 8, y + 128], fill=RED)
@@ -194,8 +197,8 @@ def captions(d, t):
         if g[0]["t0"] - 0.05 <= t < g[-1]["t1"] + 0.25:
             f = font(64); sp = d.textlength(" ", font=f)
             tot = sum(d.textlength(w["w"], font=f) for w in g) + sp * (len(g) - 1)
-            if tot > W - 120: f = font(int(64 * (W - 120) / tot)); sp = d.textlength(" ", font=f); tot = sum(d.textlength(w["w"], font=f) for w in g) + sp * (len(g) - 1)
-            x = (W - tot) / 2; y = CAP_Y
+            if tot > TXT_W: f = font(int(64 * TXT_W / tot)); sp = d.textlength(" ", font=f); tot = sum(d.textlength(w["w"], font=f) for w in g) + sp * (len(g) - 1)
+            x = TXT_CX - tot / 2; y = CAP_Y
             for w in g:
                 col = RED if w["hl"] else (YEL if w["t0"] <= t < w["t1"] + 0.05 else WHITE)
                 d.text((x, y), w["w"], font=f, fill=col, stroke_width=5, stroke_fill=(0, 0, 0)); x += d.textlength(w["w"], font=f) + sp
