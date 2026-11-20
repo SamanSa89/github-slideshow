@@ -1,6 +1,6 @@
 # Upload-Paket – „Kushner, a ‚Hitman‘ & Egyptian Jets“ (The Decoder, EN · 20.11.2026)
 
-**Video:** `kushner_planes_en_final.mp4` (YouTube Shorts / X) · `kushner_planes_en_tiktok.mp4` (TikTok-Layout) – ca. 1:29, Brian, HeyGen-Moderator
+**Video:** `2026-11-20-kushner-planes-en.mp4` (YouTube Shorts / X) · `kushner_planes_en_tiktok.mp4` (TikTok-Layout) – ca. 1:29, Brian, HeyGen-Moderator
 **Skript:** `render3d/episodes/2026-11-20-kushner-planes-en.json` (investigativ-offen: Fakten → Fragen → „you decide“)
 
 ## Faktenlage (Recherche-Grundlage)
