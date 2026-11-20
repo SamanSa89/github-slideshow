@@ -19,10 +19,10 @@ HGL = bool(HEYGEN) or os.environ.get('DESK') == '1'   # HeyGen layout: anchor ra
 CAP_Y, CHY_Y, LIFT, BOARD_S = (1712, 1788, 150, 0.76) if HGL else (1560, 1700, 0, 1.0)
 TIKTOK = os.environ.get('TIKTOK') == '1'   # keep text out of TikTok's bottom caption overlay and right button column
 if TIKTOK: CAP_Y, CHY_Y = 1290, 1372
-TXT_W = 820 if TIKTOK else W - 120; TXT_CX = 460 if TIKTOK else W / 2
 LANG = os.environ.get('LANG_UI', 'de')    # optional green-screen HeyGen video (1080x1920, anchor 1000px wide, bottom-aligned)
 TL = json.load(open(f"{WORK}/timeline.json"))
 W, H, FPS = 1080, 1920, TL["fps"]
+TXT_W = 820 if TIKTOK else W - 120; TXT_CX = 460 if TIKTOK else W / 2
 NF = int(TL["total"] * FPS)
 
 # ------------------------------------------------------------------ anchor setup (original image coordinates)
