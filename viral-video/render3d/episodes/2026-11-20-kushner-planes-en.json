@@ -1,0 +1,115 @@
+{
+ "scenes": [
+  [
+   "hook",
+   "A viral post claims Jared Kushner paid a *hitman,* and that it connects to Charlie Kirk's murder through Egyptian planes. Let's lay out what's documented, what's alleged, and what nobody has answered yet."
+  ],
+  [
+   "book",
+   "Documented: journalist Matthew Cole's new book alleges Kushner moved money from a Dubai account, to a warlord, a mercenary, and a one-time *hit man.* Kushner calls it categorically false and threatens to sue. Cole stands by it."
+  ],
+  [
+   "rashad",
+   "Egypt's intelligence chief, Hassan *Rashad.* In August he was at the table when Kushner met Hamas in Egypt, for Gaza ceasefire talks."
+  ],
+  [
+   "plane",
+   "An Egyptian military jet really was in *Provo* on September tenth. Flight data shows it left at seven-oh-eight a.m., hours before the shooting. Candace Owens says these jets crossed paths with Erika Kirk dozens of times. One analysis found about two thirds of those matches don't hold, and Erika Kirk rejects the claim. Still open: why was that jet in Provo at all? I found no public explanation."
+  ],
+  [
+   "case",
+   "Tyler Robinson is charged with aggravated murder and pleads not guilty. Trial: June *2028.* In what I found on the case, nothing links it to Egypt, Kushner or that book."
+  ],
+  [
+   "verdict",
+   "Every piece is real. The links between them? That's the part nobody has *proven.* Coincidence or connection: you decide. But decide on evidence."
+  ],
+  [
+   "cta",
+   "Don't trust me. *Verify me.* Every source is in the description."
+  ]
+ ],
+ "booms": [
+  [
+   "book",
+   "hit"
+  ],
+  [
+   "cta",
+   "Verify"
+  ]
+ ],
+ "riser": "verdict",
+ "events": {
+  "clock": [
+   "plane",
+   "seven"
+  ],
+  "snap": [
+   "verdict",
+   "proven"
+  ]
+ },
+ "chyrons": [
+  [
+   "hook",
+   "VIRAL CLAIM · INVESTIGATED",
+   "KUSHNER · EGYPT · CHARLIE KIRK: WHAT'S REAL?",
+   null
+  ],
+  [
+   "book",
+   "BOOK ALLEGATION · UNCONFIRMED",
+   "“PRINCES AND THIEVES”: DUBAI ACCOUNT PAYMENTS",
+   null
+  ],
+  [
+   "book",
+   "KUSHNER",
+   "“CATEGORICALLY FALSE” — THREATENS LAWSUIT",
+   "categorically"
+  ],
+  [
+   "rashad",
+   "AUG 16, 2026 · EGYPT",
+   "KUSHNER MEETS HAMAS — RASHAD AT THE TABLE",
+   null
+  ],
+  [
+   "plane",
+   "SEPT 10 · PROVO, UTAH",
+   "EGYPTIAN JET SU-BTT LEFT 7:08 A.M.",
+   null
+  ],
+  [
+   "plane",
+   "OWENS CLAIM · DISPUTED",
+   "JETS “TRACKED” ERIKA KIRK? ~2/3 OF MATCHES FAIL",
+   "Candace"
+  ],
+  [
+   "plane",
+   "OPEN QUESTION",
+   "WHY WAS THE JET IN PROVO?",
+   "Still"
+  ],
+  [
+   "case",
+   "STATE OF UTAH v. ROBINSON",
+   "NOT GUILTY PLEA · TRIAL JUNE 2028",
+   null
+  ],
+  [
+   "verdict",
+   "YOU DECIDE",
+   "PIECES: REAL · LINKS: UNPROVEN",
+   null
+  ],
+  [
+   "cta",
+   "VERIFY ME",
+   "SOURCES IN THE DESCRIPTION",
+   null
+  ]
+ ]
+}

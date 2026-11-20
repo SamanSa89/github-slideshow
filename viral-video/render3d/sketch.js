@@ -161,6 +161,100 @@ text('Sources ↓ in the description', 480, 460, 58, INK, wt('Sources'), 1.0, 'm
 text('THE DECODER', 480, 600, 64, BLUE, wt('Decoder', 0, -0.2), 0.8, 'middle');
 icon('1F50E', 150, 445, 90, wt('Sources', 0, -0.2)); icon('270D', 800, 600, 90, wt('Decoder', 0, 0.1));
 
+} else if (EP === 'kushner_en') {
+const ORG = '#e0a100';
+const stamp = (txt, cx, cy, w, col, t0, rot = -7, fs = 56) => { const st = document.createElementNS(NS, 'g'); st.setAttribute('transform', `rotate(${rot} ${cx} ${cy})`); CUR.g.appendChild(st);
+  const n = rc.rectangle(cx - w / 2, cy - 45, w, 90, o({ stroke: col, strokeWidth: 7 })); st.appendChild(n); draw(n, t0, 0.35, col); st.appendChild(CUR.g.lastChild);
+  text(txt, cx, cy + 20, fs, col, t0 + 0.2, 0.45, 'middle', rot); };
+const node = (x, y, label, col, t0) => { draw(rc.circle(x, y, 120, o({ stroke: col, strokeWidth: 4 })), t0, 0.35, col); text(label, x, y + 105, 40, col, t0 + 0.15, 0.4, 'middle'); };
+const dashed = (x1, y, x2, t0, col = INK) => { for (let x = x1; x < x2 - 10; x += 34) draw(rc.line(x, y, Math.min(x + 18, x2), y, o({ stroke: col, strokeWidth: 3 })), t0 + (x - x1) / 400, 0.1, col); };
+
+CUR = SC.hook;
+text('VIRAL CLAIM', 60, 85, 58, RED, wt('viral', 0, -0.2));
+icon('1F4F1', 470, 62, 80, wt('viral', 0, 0.1), -10); icon('1F525', 535, 52, 60, wt('viral', 0, 0.3));
+node(125, 230, 'Kushner', BLUE, wt('Kushner', 0, -0.1)); icon('1F1FA-1F1F8', 125, 230, 70, wt('Kushner', 0, 0.1));
+node(360, 230, 'hitman?', RED, wt('hitman', 0, -0.1)); icon('1F575', 360, 230, 80, wt('hitman', 0, 0.1));
+node(600, 230, 'Kirk case', INK, wt('Kirk', 0, -0.1)); icon('2696', 600, 230, 80, wt('Kirk', 0, 0.1));
+node(840, 230, 'Egypt jets', ORG, wt('Egypt', 0, -0.1)); icon('2708', 840, 230, 80, wt('Egypt', 0, 0.1));
+dashed(190, 230, 295, wt('hitman', 0, 0.2)); dashed(425, 230, 535, wt('Kirk', 0, 0.2)); dashed(665, 230, 775, wt('Egypt', 0, 0.2));
+text('?', 242, 205, 44, RED, wt('hitman', 0, 0.5), 0.2, 'middle'); text('?', 480, 205, 44, RED, wt('Kirk', 0, 0.5), 0.2, 'middle'); text('?', 720, 205, 44, RED, wt('Egypt', 0, 0.5), 0.2, 'middle');
+text('documented', 170, 485, 54, GREEN, wt('documented', 0, -0.2)); icon('2705', 110, 467, 64, wt('documented', 0, 0));
+text('alleged', 170, 570, 54, ORG, wt('alleged', 0, -0.2)); icon('26A0', 110, 552, 64, wt('alleged', 0, 0));
+text('unanswered', 170, 655, 54, BLUE, wt('answered', 0, -0.4)); icon('2753', 110, 637, 64, wt('answered', 0, -0.2));
+icon('1F50E', 760, 560, 170, wt('lay', 0, 0), -8);
+
+CUR = SC.book;
+draw(rc.rectangle(60, 50, 230, 300, o({ fill: '#e9dcc0', fillStyle: 'hachure', hachureGap: 9 })), wt('book', 0, -0.4), 0.6);
+text('Princes', 175, 140, 46, INK, wt('book', 0, -0.1), 0.5, 'middle'); text('& Thieves', 175, 190, 46, INK, wt('book', 0, 0.2), 0.5, 'middle');
+text('— M. Cole', 175, 300, 36, '#555', wt('Cole', 0, 0), 0.5, 'middle'); icon('1F4D6', 175, 245, 60, wt('book', 0, 0.4));
+draw(rc.rectangle(360, 60, 300, 110, o({ stroke: BLUE, strokeWidth: 4 })), wt('Dubai', 0, -0.3), 0.5, BLUE);
+text('Dubai account', 510, 128, 46, BLUE, wt('Dubai', 0, -0.1), 0.5, 'middle'); icon('1F3E6', 720, 112, 80, wt('Dubai', 0, 0.2)); icon('1F4B0', 820, 112, 70, wt('money', 0, 0));
+arrow(440, 180, 420, 250, wt('warlord', 0, -0.4)); text('warlord', 360, 300, 42, INK, wt('warlord', 0, -0.1));
+arrow(510, 180, 600, 250, wt('mercenary', 0, -0.4)); text('mercenary', 560, 300, 42, INK, wt('mercenary', 0, -0.1));
+arrow(600, 175, 800, 250, wt('hit', 0, -0.5), RED); text('“hit man”', 760, 300, 42, RED, wt('hit', 0, -0.1)); text('unnamed', 770, 345, 32, '#555', wt('man', 0, 0.3));
+stamp('ALLEGATION', 470, 410, 380, ORG, wt('hit', 0, 0.6), -4, 50);
+highlight(60, 500, 840, 80, wt('categorically', 0, -0.4));
+text('Kushner: “categorically false”', 75, 560, 56, RED, wt('categorically', 0, -0.3));
+icon('2696', 880, 540, 80, wt('sue', 0, -0.1));
+text('Cole: stands by it', 75, 660, 56, BLUE, wt('stands', 0, -0.3)); icon('270D', 560, 640, 70, wt('stands', 0, 0.2));
+
+CUR = SC.rashad;
+icon('1F1EA-1F1EC', 120, 110, 110, wt('Egypt', 0, -0.1));
+text('Hassan Rashad', 200, 105, 64, INK, wt('Rashad', 0, -0.4));
+text('Egypt’s intelligence chief', 200, 160, 40, '#555', wt('intelligence', 0, -0.1));
+draw(rc.rectangle(60, 230, 230, 110, o()), wt('August', 0, -0.3), 0.4); draw(rc.rectangle(60, 230, 230, 34, o({ stroke: RED, fill: RED, fillStyle: 'hachure', hachureGap: 6 })), wt('August', 0, -0.1), 0.3, RED);
+text('Aug 2026', 175, 320, 48, INK, wt('August'), 0.5, 'middle');
+draw(rc.ellipse(600, 400, 420, 190, o({ fill: '#c9b38a', fillStyle: 'hachure', hachureGap: 9 })), wt('table', 0, -0.3), 0.6);
+icon('1F1FA-1F1F8', 430, 270, 70, wt('Kushner', 0, -0.1)); text('Kushner', 430, 240, 38, BLUE, wt('Kushner', 0, 0), 0.4, 'middle');
+icon('1F5E3', 770, 270, 70, wt('Hamas', 0, -0.1)); text('Hamas', 770, 240, 38, INK, wt('Hamas', 0, 0), 0.4, 'middle');
+icon('1F1EA-1F1EC', 600, 525, 70, wt('Rashad', 0, 1.2)); text('Rashad', 600, 600, 38, ORG, wt('table', 0, 0.2), 0.4, 'middle');
+text('Gaza ceasefire', 600, 410, 44, INK, wt('Gaza', 0, -0.2), 0.6, 'middle'); icon('1F54A', 470, 400, 60, wt('ceasefire', 0, 0));
+text('official talks', 60, 690, 42, GREEN, wt('Hamas', 0, 0.1)); text('· how close?', 320, 690, 42, BLUE, wt('Gaza', 0, 0.1));
+
+CUR = SC.plane;
+text('Provo, Utah · Sept 10', 60, 80, 50, INK, wt('Provo', 0, -0.3)); icon('2708', 620, 62, 80, wt('Egyptian', 0, 0)); text('SU-BTT', 680, 80, 44, ORG, wt('military', 0, 0));
+draw(rc.line(70, 200, 900, 200, o({ strokeWidth: 5 })), wt('Flight', 0, -0.3), 0.6);
+draw(rc.line(220, 180, 220, 220, o({ stroke: ORG, strokeWidth: 6 })), TL.events.clock - 0.3, 0.2, ORG);
+text('7:08 AM', 220, 265, 48, ORG, TL.events.clock - 0.1, 0.5, 'middle'); text('jet departs', 220, 160, 34, ORG, TL.events.clock + 0.2, 0.4, 'middle');
+draw(rc.line(700, 180, 700, 220, o({ stroke: RED, strokeWidth: 6 })), wt('shooting', 0, -0.4), 0.2, RED);
+text('midday', 700, 265, 48, RED, wt('shooting', 0, -0.2), 0.4, 'middle'); text('shooting', 700, 160, 34, RED, wt('shooting', 0, 0), 0.4, 'middle');
+draw(rc.path('M 240 290 Q 460 340 680 290', o({ stroke: BLUE })), wt('hours', 0, -0.2), 0.5, BLUE); text('hours before', 460, 345, 40, BLUE, wt('hours', 0, 0), 0.4, 'middle');
+icon('1F570', 860, 120, 70, TL.events.clock);
+text('Owens: jets crossed Erika Kirk’s path', 60, 420, 42, INK, wt('Candace', 0, -0.2));
+draw(rc.circle(140, 515, 110, o()), wt('analysis', 0, -0.2), 0.4);
+draw(rc.path('M 140 515 L 140 460 A 55 55 0 1 1 92 543 Z', o({ stroke: RED, fill: RED, fillStyle: 'hachure', hachureGap: 6 })), wt('two', 0, -0.1), 0.5, RED);
+text('~2/3 don’t hold', 220, 530, 46, RED, wt('thirds', 0, -0.1)); text('Erika Kirk: rejects it', 560, 530, 38, BLUE, wt('rejects', 0, -0.2));
+highlight(55, 600, 860, 85, wt('Still', 0, -0.3));
+text('OPEN: why was the jet in Provo?', 70, 665, 56, INK, wt('Still', 0, -0.1)); icon('2753', 890, 640, 70, wt('why', 0, 0));
+
+CUR = SC.case;
+icon('2696', 130, 120, 120, wt('Robinson', 0, -0.2));
+text('Utah v. Robinson', 220, 110, 62, INK, wt('Robinson', 0, -0.4));
+text('aggravated murder · pleads not guilty', 60, 230, 42, INK, wt('aggravated', 0, -0.2));
+icon('1F4C5', 140, 345, 100, wt('Trial', 0, -0.1)); text('Trial: June 2028', 220, 365, 60, BLUE, wt('Trial', 0, -0.1));
+text('Link to …', 60, 480, 48, '#555', wt('found', 0, -0.4));
+[['Egypt', 'Egypt', 120], ['Kushner', 'Kushner', 400], ['the book', 'book', 680]].forEach(([lab, tok, x]) => { text(lab, x, 570, 50, INK, wt(tok, 0, -0.2)); });
+highlight(55, 610, 860, 80, wt('nothing', 0, -0.2));
+text('none found in reporting', 70, 670, 56, INK, wt('nothing', 0, -0.1));
+
+CUR = SC.verdict;
+[['1F4D6', 'book', 130], ['1F575', 'spy chief', 365], ['2708', 'plane', 600], ['2696', 'trial', 835]].forEach(([c, lab, x], i) => {
+  icon(c, x, 140, 100, wt('piece', 0, -0.2 + i * 0.2)); text(lab, x, 240, 38, INK, wt('piece', 0, i * 0.2), 0.3, 'middle');
+  check(x - 25, 300, 50, wt('real', 0, -0.1 + i * 0.15)); });
+[245, 480, 715].forEach((x, i) => { dashed(x - 45, 140, x + 45, wt('links', 0, i * 0.15), RED); text('?', x, 115, 46, RED, wt('links', 0, 0.3 + i * 0.15), 0.2, 'middle'); });
+stamp('NOT PROVEN', 480, 420, 470, RED, TL.events.snap - 0.2, -5, 58);
+text('coincidence', 70, 580, 56, INK, wt('Coincidence', 0, -0.2)); text('or', 445, 580, 44, '#555', wt('or', 0, 0)); text('connection?', 520, 580, 56, INK, wt('connection', 0, -0.2));
+highlight(200, 625, 560, 75, wt('decide', 0, -0.3));
+text('YOU DECIDE – on evidence', 480, 680, 54, BLUE, wt('decide', 0, -0.2), 0.8, 'middle');
+icon('1F914', 870, 560, 90, wt('Coincidence', 0, 0.3));
+
+CUR = SC.cta;
+highlight(150, 170, 660, 120, wt('Verify', 0, -0.3));
+text('VERIFY ME!', 480, 270, 130, RED, wt('Verify', 0, -0.1), 0.7, 'middle');
+draw(rc.ellipse(480, 225, 760, 210, o({ stroke: RED, strokeWidth: 5 })), wt('Verify', 0, 0.5), 0.6, RED);
+text('Sources ↓ in the description', 480, 460, 58, INK, wt('source'), 1.0, 'middle');
+text('THE DECODER', 480, 600, 64, BLUE, wt('Verify', 0, 0.9), 0.8, 'middle');
+icon('1F50E', 150, 445, 90, wt('source', 0, -0.2)); icon('270D', 800, 600, 90, wt('Verify', 0, 1.2));
 } else if (EP === 'airspace_en') {
 
 const jet = (x, y, ang, sz, t0, col = RED) => {   // top-view jet, nose pointing to ang (rad)
