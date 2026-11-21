@@ -7,6 +7,11 @@ Alternativ: `branding/tiktok-cover-kushner-planes-en-1080x1920.jpg` hochladen (T
 
 ---
 
+## Titel (Feld „Titel“ im TikTok Studio bzw. in neueren App-Versionen; sonst als Cover-Text)
+```
+Kushner, a "Hitman" & Egyptian Jets: What's Actually Proven?
+```
+
 ## Caption (zum Einfügen)
 ```
 A viral post ties Kushner, a "hitman" and Egyptian jets to the Charlie Kirk case. I checked every link 🧩
