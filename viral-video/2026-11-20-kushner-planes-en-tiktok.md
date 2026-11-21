@@ -3,7 +3,7 @@
 **Video:** `2026-11-20-kushner-planes-en-tiktok.mp4` (1:29, 1080×1920). Untertitel und Bauchbinde liegen oberhalb von TikToks Beschreibungstext und links von der Button-Spalte.
 
 **Cover:** Beim Posten auf „Cover bearbeiten“ tippen und den Frame bei **ca. 0:02** wählen (Moderator mit der Kette „Kushner – hitman? – Kirk case – Egypt jets“ auf der Tafel). Als Text-Overlay `WHAT'S PROVEN? 🧩` oben einsetzen.
-Alternativ: `branding/shorts-cover-kushner-planes-en-1080x1920.jpg` hochladen. Das geht nur in manchen App-Versionen oder im TikTok Studio am Desktop.
+Alternativ: `branding/tiktok-cover-kushner-planes-en-1080x1920.jpg` hochladen (Texte liegen im 3:4-Ausschnitt des Profilrasters). Das geht nur in manchen App-Versionen oder im TikTok Studio am Desktop.
 
 ---
 
