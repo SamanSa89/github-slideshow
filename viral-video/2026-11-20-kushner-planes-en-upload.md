@@ -55,7 +55,7 @@ Icons: OpenMoji – openmoji.org (CC BY-SA 4.0)
 ```
 **Tags:**
 ```
-jared kushner, charlie kirk, egyptian plane, su-btt, provo, candace owens, erika kirk, hassan rashad, princes and thieves, matthew cole, tyler robinson trial, conspiracy theory, investigation, fact check, flight data, the decoder, verify me, news explained
+jared kushner, charlie kirk, egyptian plane, egyptian jet provo, su-btt, candace owens, erika kirk, hassan rashad, princes and thieves, matthew cole, kushner hitman, tyler robinson trial, charlie kirk investigation, flight data, conspiracy theory, fact check, investigation, news explained, breaking news, the decoder, verify me
 ```
 **Angepinnter Kommentar:**
 ```
