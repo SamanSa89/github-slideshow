@@ -1,0 +1,30 @@
+{
+ "scenes": [
+  ["hook", "A viral thread says Xi, Putin and Iran all called Trump's *bluff* at Shenzhen. It's based on Chicago professor Robert Pape. Let's split the facts from the poker talk."],
+  ["table", "Fact: Xi hosted, and warned Trump on *Taiwan.* No deal on Iran, none on Ukraine."],
+  ["putin", "Days before, Ukraine hit the Crimean *Bridge.* Russian missiles then struck bridges in Kyiv. And Moscow revived an old demand: NATO back to its *1997* lines. That would hit sixteen member states."],
+  ["iran", "Iran has more than fourteen *tankers* at Kharg Island, and says the US blockade must be broken. But analysts see no major new loading, and one tanker on tracking sites turned out to be *fake.*"],
+  ["money", "The blockade costs an estimated thirty-two million dollars a *day.* Congress must fund the government by December eleventh."],
+  ["spin", "Now the spin. Trump lost a third of America's power in the Gulf? That's Pape's *estimate,* not a measurement. The dirty bomb plot? Anonymous intel. Iran denies it, and the White House calls it not credible."],
+  ["verdict", "The pressure is real, from three sides at once. Called bluff, or long game? That's *interpretation.* Watch the tankers. Watch December eleventh. Then you decide."],
+  ["cta", "Don't trust me. *Verify me.* Sources are in the description."]
+ ],
+ "booms": [["putin", "Bridge"], ["cta", "Verify"]],
+ "riser": "verdict",
+ "events": {"fake": ["iran", "fake"], "day": ["money", "day"]},
+ "chyrons": [
+  ["hook", "VIRAL THREAD · ANALYSIS", "DID XI, PUTIN & IRAN CALL TRUMP'S BLUFF?", null],
+  ["table", "SHENZHEN · NOV 19", "XI WARNS ON TAIWAN · NO DEAL ON IRAN OR UKRAINE", null],
+  ["putin", "NOV 16–17", "UKRAINE STRIKES THE CRIMEAN BRIDGE", null],
+  ["putin", "RETALIATION", "RUSSIAN MISSILES HIT KYIV BRIDGES", "Russian"],
+  ["putin", "RUSSIAN PAPER · NOV 10 (NYT)", "NATO BACK TO 1997 LINES — 16 STATES AFFECTED", "NATO"],
+  ["iran", "KHARG ISLAND · IRAN", "14+ TANKERS READY TO TEST THE US BLOCKADE", null],
+  ["iran", "ANALYSTS · UNCONFIRMED", "NO MAJOR NEW LOADING · ONE “TANKER” FAKE", "analysts"],
+  ["money", "SENATE HEARING · NOV 17", "BLOCKADE: ~$32M PER DAY (ESTIMATE)", null],
+  ["money", "DEADLINE", "GOVERNMENT FUNDING DUE DEC 11", "Congress"],
+  ["spin", "OPINION", "“LOST A THIRD OF US POWER” = PAPE'S ESTIMATE", null],
+  ["spin", "UNCONFIRMED · ANONYMOUS INTEL", "DIRTY BOMB PLOT: IRAN DENIES · WH: “NOT CREDIBLE”", "dirty"],
+  ["verdict", "YOU DECIDE", "PRESSURE: REAL · BLUFF: INTERPRETATION", null],
+  ["cta", "VERIFY ME", "SOURCES IN THE DESCRIPTION", null]
+ ]
+}

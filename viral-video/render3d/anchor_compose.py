@@ -23,6 +23,14 @@ LANG = os.environ.get('LANG_UI', 'de')    # optional green-screen HeyGen video (
 TL = json.load(open(f"{WORK}/timeline.json"))
 W, H, FPS = 1080, 1920, TL["fps"]
 TXT_W = 820 if TIKTOK else W - 120; TXT_CX = 460 if TIKTOK else W / 2
+# PIP=1: board large in the upper half with a camera that follows the pen, anchor in a round picture-in-picture bottom-left
+PIP = os.environ.get('PIP') == '1'
+CHY_X = 40
+if PIP:
+    CAP_Y, CHY_Y = 1298, 1372
+    CHY_X = 375; TXT_W = 570 if TIKTOK else 665; TXT_CX = CHY_X + TXT_W / 2
+    VP_Y, VP_H = 98, 1182                       # board viewport
+    PIP_C, PIP_R = (190, 1440), 150             # anchor circle (center, radius)
 NF = int(TL["total"] * FPS)
 
 # ------------------------------------------------------------------ anchor setup (original image coordinates)
@@ -175,10 +183,12 @@ def chyron(d, t, s):
     k, h, a = items[-1]; lt = t - a; out = s["end"] + 0.3 - t
     p = ease(lt / 0.45) * (ease(out / 0.35) if out < 0.35 else 1)
     if p <= 0: return
-    y = CHY_Y; x0 = 40; fk, fh = font(30), font(46)
+    y = CHY_Y; x0 = CHY_X; fk, fh = font(30), font(46)
     hw = d.textlength(h, font=fh)
     if hw > TXT_W - 40: fh = font(int(46 * (TXT_W - 40) / hw)); hw = d.textlength(h, font=fh)
-    kw = d.textlength(k, font=fk); kc = YEL if ("UNBEST" in k or "UNCONFIRMED" in k) else RED
+    kw = d.textlength(k, font=fk)
+    if kw > TXT_W - 40: fk = font(int(30 * (TXT_W - 40) / kw)); kw = d.textlength(k, font=fk)
+    kc = YEL if ("UNBEST" in k or "UNCONFIRMED" in k) else RED
     d.rectangle([x0, y + 50, x0 + int((hw + 60) * p), y + 128], fill=(255, 255, 255, 240))
     d.rectangle([x0, y + 50, x0 + 8, y + 128], fill=RED)
     d.rectangle([x0, y, x0 + int((kw + 36) * p), y + 50], fill=kc + (255,))
@@ -207,6 +217,62 @@ TOPBAR = Image.new("RGBA", (W, 96)); td = ImageDraw.Draw(TOPBAR)
 td.rectangle([0, 0, W, 96], fill=(4, 14, 48, 200)); td.rectangle([0, 92, W, 96], fill=RED)
 td.text((80, 24), "THE DECODER" if LANG == "en" else "DER DECODER", font=font(40), fill=WHITE)
 lab = "AI-GENERATED" if LANG == "en" else "KI-GENERIERT"; td.text((W - 40 - td.textlength(lab, font=font(28, False)), 32), lab, font=font(28, False), fill=GREY)
+
+# ------------------------------------------------------------------ PIP layout helpers
+if PIP:
+    _pen = json.load(open(os.environ.get('PEN') or f"{BOARD}/pen.json"))
+    _pm = {round(tp * FPS): pp for tp, pp in _pen}
+    CY0 = 430.0 if not os.path.exists(f"{BOARD}/portrait") else 585.0
+    CAM = np.zeros((NF + 1, 3)); fx, fy, act = 540.0, CY0, 0.0
+    for i in range(NF + 1):
+        pp = _pm.get(i)
+        on = 1.0 if pp else 0.0
+        act += (on - act) * 0.035
+        tx, ty = ((60 + pp['x'], 50 + pp['y']) if pp else (540.0, CY0))
+        k_ = 0.05 if pp else 0.015
+        fx += (tx - fx) * k_; fy += (ty - fy) * k_
+        CAM[i] = (fx, fy, act)
+    # look-ahead so the camera arrives before the stroke rather than chasing it
+    LA = int(0.5 * FPS); CAM = np.vstack([CAM[LA:], np.repeat(CAM[-1:], LA, 0)])
+    _yy, _xx = np.mgrid[0:2 * PIP_R, 0:2 * PIP_R]
+    PIP_MASK = (np.clip(PIP_R - np.hypot(_xx - PIP_R + 0.5, _yy - PIP_R + 0.5), 0, 1))[..., None]
+    def pip_frame(fi, t, bg, hg):
+        bw_, bh_ = int(W * 1.06), int(H * 1.06)
+        bgr = np.asarray(bg.resize((bw_, bh_), Image.BILINEAR)).astype(np.float32)
+        frame = bgr[(bh_ - H) // 2:(bh_ - H) // 2 + H, (bw_ - W) // 2:(bw_ - W) // 2 + W]
+        frame = cv2.GaussianBlur(frame, (0, 0), 6) * 0.55
+        img_o = Image.fromarray(np.clip(frame, 0, 255).astype(np.uint8))
+        # board with pen-following zoom
+        try: bd = Image.open(f"{BOARD}/s{fi:05d}.png").convert("RGBA")
+        except FileNotFoundError: bd = None
+        if bd is not None:
+            fx, fy, act = CAM[min(fi, NF)]
+            z = 1.0 + (0.24 if bd.height < 1000 else 0.16) * eio(act)
+            sw, sh = int(bd.width * z), int(bd.height * z)
+            bz = bd.resize((sw, sh), Image.BICUBIC)
+            ox = W / 2 - fx * z; oy = VP_H / 2 - fy * z
+            ox = min(0, max(W - sw, ox)) if sw >= W else (W - sw) / 2
+            oy = min(0, max(VP_H - sh, oy)) if sh >= VP_H else (VP_H - sh) / 2
+            vp = Image.new("RGBA", (W, VP_H)); vp.alpha_composite(bz, (int(ox), int(oy))) if (ox >= 0 and oy >= 0) else vp.paste(bz, (int(ox), int(oy)), bz)
+            img_o.paste(vp, (0, VP_Y), vp)
+        # anchor picture-in-picture
+        cx, cy = PIP_C; R = PIP_R
+        disc = np.zeros((2 * R, 2 * R, 3), np.float32); disc[:] = (20, 55, 150)
+        g_ = np.linspace(0, 1, 2 * R)[:, None, None]; disc = disc * (1.25 - 0.5 * g_)
+        if hg is not None:
+            crop = hg[960:1720, 160:920]
+            crop = cv2.resize(crop, (2 * R, 2 * R), interpolation=cv2.INTER_AREA).astype(np.float32)
+            al = crop[..., 3:4] / 255.0
+            disc = disc * (1 - al) + crop[..., :3] * al
+        o = np.asarray(img_o).astype(np.float32)
+        # shadow + ring
+        sh_ = np.zeros(o.shape[:2], np.float32); cv2.circle(sh_, (cx + 6, cy + 10), R + 12, 1, -1); sh_ = cv2.GaussianBlur(sh_, (0, 0), 12)[..., None]
+        o = o * (1 - 0.55 * sh_)
+        ring = np.zeros(o.shape[:2], np.float32); cv2.circle(ring, (cx, cy), R + 9, 1, -1, cv2.LINE_AA); ring = ring[..., None]
+        o = o * (1 - ring) + np.array(RED, np.float32) * ring
+        sub = o[cy - R:cy + R, cx - R:cx + R]
+        o[cy - R:cy + R, cx - R:cx + R] = sub * (1 - PIP_MASK) + disc * PIP_MASK
+        return Image.fromarray(np.clip(o, 0, 255).astype(np.uint8))
 
 # ------------------------------------------------------------------ frame loop
 ff = None
@@ -242,6 +308,18 @@ for fi in ([STILL] if STILL is not None else range(NF)):
     nod = 3.5 * msm + 2.0 * math.sin(t * 2.1) * msm + hl * 3
     if BOARD: c = 0.205 + 0.05 * hl
     hg = heygen_layer() if HEYGEN else None
+    if PIP:
+        try: bg = Image.open(f"{BGF}/f{fi:05d}.jpg").convert("RGB"); lastbg = bg
+        except FileNotFoundError: bg = lastbg if lastbg is not None else Image.new("RGB", (720, 1280), (6, 20, 60))
+        img_o = pip_frame(fi, t, bg, hg)
+        ov = Image.new("RGBA", (W, H)); d = ImageDraw.Draw(ov)
+        ov.alpha_composite(TOPBAR)
+        if int(t * 1.6) % 2 == 0: d.ellipse([36, 34, 60, 58], fill=RED)
+        chyron(d, t, s); captions(d, t)
+        d.rectangle([0, H - 8, int(W * t / TL["total"]), H], fill=RED)
+        out = Image.alpha_composite(img_o.convert("RGBA"), ov).convert("RGB")
+        if STILL is not None: out.save(OUT); break
+        ff.stdin.write(out.tobytes()); continue
     person = None if hg is not None else animate_head(a, blink_at(t), hl, theta, nod)
     # --- camera framing
     sc = 0.668 + (1.02 - 0.668) * c

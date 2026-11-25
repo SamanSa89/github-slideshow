@@ -7,6 +7,9 @@ const TL = await (await fetch(PRM.get('tl') || './work/timeline.json')).json();
 await document.fonts.load('700 40px Caveat');
 const NS = 'http://www.w3.org/2000/svg';
 const svg = document.getElementById('svg'), board = document.getElementById('board');
+const PORTRAIT = PRM.get('portrait') === '1';   // tall board for the PIP layout: 960x1080
+const BH = PORTRAIT ? 1080 : 720;
+if (PORTRAIT) { document.getElementById('stage').style.height = '1170px'; board.style.height = BH + 'px'; svg.setAttribute('height', BH); svg.setAttribute('viewBox', `0 0 960 ${BH}`); }
 const rc = rough.svg(svg);
 const INK = '#1d2433', RED = '#d4142a', BLUE = '#1f5fbf', GREEN = '#178a3a', YEL = '#ffd23c';
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -558,7 +561,7 @@ window.renderAt = (t) => {
   const t0 = TL.scenes[0].start;
   const drop = back((t - t0 + 0.2) / 0.7);
   const ls = t - s.start, flip = s !== TL.scenes[0] ? clamp(ls / 0.35) : 1;
-  board.style.transform = `translateY(${(1 - drop) * -820}px) rotate(${Math.sin(t * 0.5) * 0.35 - 0.6}deg) scaleY(${0.92 + 0.08 * ease(flip)})`;
+  board.style.transform = `translateY(${(1 - drop) * -(BH + 100)}px) rotate(${Math.sin(t * 0.5) * 0.35 - 0.6}deg) scaleY(${0.92 + 0.08 * ease(flip)})`;
   let penPos = null, penCol = INK, latest = -1, penKind = null;
   for (const k in SC) {
     const sc = SC[k]; const vis = sc.s === s; sc.g.style.display = vis ? '' : 'none'; if (!vis) continue;
