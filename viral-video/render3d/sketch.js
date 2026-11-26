@@ -164,6 +164,101 @@ text('Sources ↓ in the description', 480, 460, 58, INK, wt('Sources'), 1.0, 'm
 text('THE DECODER', 480, 600, 64, BLUE, wt('Decoder', 0, -0.2), 0.8, 'middle');
 icon('1F50E', 150, 445, 90, wt('Sources', 0, -0.2)); icon('270D', 800, 600, 90, wt('Decoder', 0, 0.1));
 
+} else if (EP === 'bluff_en') {
+const ORG = '#e0a100', FELT = '#2f7d4f';
+const stamp = (txt, cx, cy, w, col, t0, rot = -7, fs = 60) => { const st = document.createElementNS(NS, 'g'); st.setAttribute('transform', `rotate(${rot} ${cx} ${cy})`); CUR.g.appendChild(st);
+  const n = rc.rectangle(cx - w / 2, cy - 48, w, 96, o({ stroke: col, strokeWidth: 7 })); st.appendChild(n); draw(n, t0, 0.35, col); st.appendChild(CUR.g.lastChild);
+  text(txt, cx, cy + 22, fs, col, t0 + 0.2, 0.45, 'middle', rot); };
+const seat = (x, y, flag, label, col, t0, ly) => { draw(rc.circle(x, y, 130, o({ stroke: col, strokeWidth: 5, fill: '#fffdf7', fillStyle: 'solid' })), t0, 0.35, col); icon(flag, x, y, 84, t0 + 0.15); text(label, x, ly, 44, col, t0 + 0.25, 0.4, 'middle'); };
+const dashed = (x1, y1, x2, y2, t0, col = INK, w = 4) => { const n = Math.floor(Math.hypot(x2 - x1, y2 - y1) / 34); for (let i = 0; i < n; i++) { const a = i / n, b = (i + 0.55) / n; draw(rc.line(x1 + (x2 - x1) * a, y1 + (y2 - y1) * a, x1 + (x2 - x1) * b, y1 + (y2 - y1) * b, o({ stroke: col, strokeWidth: w })), t0 + i * 0.025, 0.08, col); } };
+
+CUR = SC.hook;
+text('VIRAL THREAD', 60, 95, 66, RED, wt('viral', 0, -0.2)); icon('1F4F1', 560, 70, 84, wt('viral', 0, 0.1), -10); icon('1F525', 630, 58, 64, wt('viral', 0, 0.3));
+draw(rc.ellipse(480, 470, 720, 420, o({ fill: FELT, fillStyle: 'hachure', hachureGap: 8, stroke: '#1f5a37', strokeWidth: 6 })), wt('Xi', 0, -0.5), 0.8, '#1f5a37');
+seat(480, 270, '1F1E8-1F1F3', 'Xi · the house', RED, wt('Xi', 0, -0.1), 195);
+seat(170, 470, '1F1F7-1F1FA', 'Putin', RED, wt('Putin', 0, -0.1), 382);
+seat(790, 470, '1F1EE-1F1F7', 'Iran · watching', ORG, wt('Iran', 0, -0.1), 382);
+seat(480, 670, '1F1FA-1F1F8', 'Trump', BLUE, wt('Trump', 0, -0.1), 790);
+icon('1F0CF', 420, 470, 90, wt('bluff', 0, -0.3), -12); icon('1FA99', 545, 470, 80, wt('bluff', 0, 0));
+highlight(150, 840, 660, 90, wt('bluff', 0, 0.1)); text('bluff called?', 480, 908, 78, INK, wt('bluff', 0, 0.2), 0.6, 'middle');
+text('Prof. Robert Pape · U Chicago', 480, 990, 44, '#555', wt('Pape', 0, -0.5), 0.8, 'middle');
+text('facts', 300, 1060, 50, GREEN, wt('facts', 0, -0.1), 0.4, 'middle'); text('vs.', 480, 1060, 40, '#555', wt('facts', 0, 0.2), 0.2, 'middle'); text('poker talk', 650, 1060, 50, RED, wt('poker', 0, -0.1), 0.5, 'middle');
+
+CUR = SC.table;
+text('SHENZHEN · Nov 19', 60, 95, 62, INK, wt('Xi', 0, -0.6));
+icon('1F1E8-1F1F3', 200, 290, 170, wt('hosted', 0, -0.2)); text('Xi hosts', 200, 430, 50, RED, wt('hosted', 0, 0), 0.4, 'middle');
+arrow(320, 290, 640, 290, wt('warned', 0, -0.2), RED); icon('26A0', 480, 240, 70, wt('warned', 0, 0.1));
+icon('1F1F9-1F1FC', 760, 290, 150, wt('Taiwan', 0, -0.2)); text('Taiwan', 760, 430, 50, INK, wt('Taiwan', 0, 0), 0.4, 'middle');
+text('“do the right thing”', 480, 530, 54, RED, wt('Taiwan', 0, 0.4), 0.7, 'middle');
+draw(rc.line(80, 600, 880, 600, o({ strokeWidth: 2 })), wt('deal', 0, -0.4), 0.3);
+icon('1F1EE-1F1F7', 130, 700, 100, wt('Iran', 0, -0.2)); text('deal on Iran', 210, 720, 64, INK, wt('Iran', 0, -0.1)); cross(760, 670, 70, wt('Iran', 0, 0.3));
+icon('1F1FA-1F1E6', 130, 870, 100, wt('Ukraine', 0, -0.2)); text('deal on Ukraine', 210, 890, 64, INK, wt('Ukraine', 0, -0.1)); cross(760, 840, 70, wt('Ukraine', 0, 0.3));
+
+CUR = SC.putin;
+text('Crimean Bridge · Nov 16–17', 60, 95, 54, INK, wt('Crimean', 0, -0.6));
+draw(rc.line(60, 250, 900, 250, o({ strokeWidth: 7 })), wt('Ukraine', 0, -0.2), 0.5);
+for (let i = 0; i < 6; i++) draw(rc.path(`M ${80 + i * 140} 250 Q ${150 + i * 140} 170 ${220 + i * 140} 250`, o({ strokeWidth: 3 })), wt('Ukraine', 0, 0.1 + i * 0.06), 0.15);
+for (let i = 0; i < 7; i++) draw(rc.line(80 + i * 140, 250, 80 + i * 140, 330, o({ strokeWidth: 4 })), wt('hit', 0, -0.2 + i * 0.04), 0.1);
+draw(rc.path('M 40 345 Q 260 325 480 345 T 920 345', o({ stroke: BLUE, strokeWidth: 3 })), wt('hit', 0, 0), 0.4, BLUE);
+icon('1F4A5', 520, 225, 150, wt('Bridge', 0, -0.1)); icon('1F1FA-1F1E6', 110, 165, 70, wt('Ukraine', 0, 0));
+icon('1F680', 120, 450, 90, wt('missiles', 0, -0.2), 30); text('→ Kyiv bridges hit', 190, 470, 58, RED, wt('missiles', 0, 0)); icon('1F309', 790, 450, 90, wt('Kyiv', 0, 0));
+draw(rc.line(80, 540, 880, 540, o({ strokeWidth: 2 })), wt('Moscow', 0, -0.4), 0.3);
+text('Moscow’s old demand:', 60, 620, 50, '#555', wt('revived', 0, -0.2));
+highlight(60, 650, 620, 110, wt('NATO', 0, -0.2)); text('NATO → 1997', 80, 735, 96, INK, wt('NATO', 0, -0.1), 0.8);
+icon('1F1F7-1F1FA', 820, 700, 110, wt('demand', 0, 0));
+for (let i = 0; i < 16; i++) { const x = 120 + (i % 8) * 100, y = 860 + Math.floor(i / 8) * 100; draw(rc.circle(x, y, 64, o({ stroke: BLUE, strokeWidth: 4 })), wt('sixteen', 0, -0.4 + i * 0.05), 0.15, BLUE); }
+text('16 member states affected', 480, 1060, 50, BLUE, wt('member', 0, -0.2), 0.6, 'middle');
+
+CUR = SC.iran;
+icon('1F1EE-1F1F7', 100, 80, 90, wt('Iran', 0, -0.1)); text('Kharg Island', 170, 100, 66, INK, wt('Kharg', 0, -0.3));
+for (let i = 0; i < 14; i++) icon('1F6A2', 120 + (i % 7) * 120, 220 + Math.floor(i / 7) * 120, 96, wt('tankers', 0, -0.6 + i * 0.07));
+text('14+', 880, 440, 54, RED, wt('tankers', 0, 0.5), 0.3, 'middle');
+dashed(60, 520, 900, 520, wt('blockade', 0, -0.3), RED, 6); text('US blockade', 640, 575, 46, RED, wt('blockade', 0, 0));
+arrow(300, 410, 300, 500, wt('broken', 0, -0.3), ORG); text('“must be broken”', 60, 640, 54, ORG, wt('broken', 0, -0.1));
+icon('1F6F0', 120, 760, 100, wt('analysts', 0, -0.2)); text('analysts: no major', 200, 760, 52, INK, wt('analysts', 0, 0)); text('new loading', 200, 820, 52, INK, wt('loading', 0, -0.2));
+icon('1F4E1', 120, 960, 90, wt('tracking', 0, -0.2)); text('“tanker” on a tracking site', 190, 975, 46, INK, wt('tracking', 0, 0));
+stamp('FAKE', 760, 920, 230, RED, TL.events.fake - 0.1, -10, 70);
+
+CUR = SC.money;
+icon('1F4B8', 160, 230, 150, wt('blockade', 0, 0));
+text('$32M', 280, 290, 170, RED, TL.events.day - 1.2, 0.8);
+text('per day · estimate', 290, 370, 50, '#555', TL.events.day - 0.2, 0.5);
+text('≈ $1 billion a month', 290, 460, 54, INK, TL.events.day + 0.4, 0.7);
+draw(rc.line(80, 560, 880, 560, o({ strokeWidth: 2 })), wt('Congress', 0, -0.4), 0.3);
+icon('1F3DB', 200, 740, 190, wt('Congress', 0, -0.2));
+draw(rc.rectangle(420, 640, 300, 260, o()), wt('fund', 0, -0.2), 0.4); draw(rc.rectangle(420, 640, 300, 70, o({ stroke: RED, fill: RED, fillStyle: 'hachure', hachureGap: 6 })), wt('fund', 0, 0), 0.3, RED);
+text('DEC 11', 570, 830, 90, INK, wt('December', 0, -0.2), 0.6, 'middle');
+text('government funding deadline', 480, 990, 50, BLUE, wt('government', 0, -0.2), 0.8, 'middle');
+
+CUR = SC.spin;
+text('THE SPIN', 60, 95, 66, RED, wt('spin', 0, -0.3));
+text('“Trump lost a third', 60, 210, 58, INK, wt('third', 0, -0.8)); text('of US power in the Gulf”', 60, 280, 58, INK, wt('power', 0, -0.2)); icon('1F4C9', 840, 220, 100, wt('Gulf', 0, 0));
+stamp('PAPE’S ESTIMATE', 480, 400, 560, ORG, wt('estimate', 0, -0.2), -4, 58);
+draw(rc.line(80, 500, 880, 500, o({ strokeWidth: 2 })), wt('dirty', 0, -0.6), 0.3);
+icon('2622', 120, 590, 100, wt('dirty', 0, -0.3)); text('dirty bomb plot?', 200, 610, 64, INK, wt('dirty', 0, -0.1));
+icon('1F575', 120, 720, 90, wt('Anonymous', 0, -0.2)); text('anonymous intel', 200, 740, 54, '#555', wt('Anonymous', 0, 0));
+text('Iran: denies', 200, 830, 54, INK, wt('denies', 0, -0.3)); text('White House: “not credible”', 200, 910, 54, BLUE, wt('White', 0, -0.1));
+stamp('UNCONFIRMED', 480, 1020, 460, ORG, wt('credible', 0, 0.3), -4, 58);
+
+CUR = SC.verdict;
+icon('1F1FA-1F1F8', 480, 330, 150, wt('pressure', 0, -0.3));
+icon('1F1E8-1F1F3', 150, 150, 100, wt('three', 0, -0.3)); arrow(210, 190, 390, 290, wt('three', 0, -0.1), RED);
+icon('1F1F7-1F1FA', 810, 150, 100, wt('sides', 0, -0.3)); arrow(750, 190, 570, 290, wt('sides', 0, -0.1), RED);
+icon('1F1EE-1F1F7', 480, 560, 90, wt('once', 0, -0.3)); arrow(480, 510, 480, 420, wt('once', 0, -0.1), RED);
+text('pressure: REAL', 640, 520, 50, GREEN, wt('real', 0, 0)); 
+text('called bluff?', 60, 700, 56, INK, wt('Called', 0, -0.2)); text('long game?', 560, 700, 56, INK, wt('long', 0, -0.2)); icon('1F0CF', 470, 680, 70, wt('Called', 0, 0.3), 10);
+highlight(160, 730, 640, 85, wt('interpretation', 0, -0.4)); text('= interpretation', 480, 795, 64, INK, wt('interpretation', 0, -0.2), 0.7, 'middle');
+icon('1F441', 110, 880, 70, wt('Watch', 0, -0.2)); text('tankers', 170, 900, 54, INK, wt('tankers', 0, -0.3));
+icon('1F441', 520, 880, 70, wt('Watch', 1, -0.2)); text('Dec 11', 580, 900, 54, INK, wt('December', 0, -0.3));
+text('YOU DECIDE', 480, 1040, 90, BLUE, wt('decide', 0, -0.4), 0.7, 'middle');
+
+CUR = SC.cta;
+highlight(150, 340, 660, 130, wt('Verify', 0, -0.3));
+text('VERIFY ME!', 480, 445, 136, RED, wt('Verify', 0, -0.1), 0.7, 'middle');
+draw(rc.ellipse(480, 400, 780, 230, o({ stroke: RED, strokeWidth: 5 })), wt('Verify', 0, 0.5), 0.6, RED);
+text('Sources ↓ in the description', 480, 680, 60, INK, wt('Sources', 0, -0.1), 1.0, 'middle');
+text('THE DECODER', 480, 840, 70, BLUE, wt('Verify', 0, 0.9), 0.8, 'middle');
+icon('1F50E', 150, 665, 90, wt('Sources', 0, -0.2)); icon('270D', 810, 840, 90, wt('Verify', 0, 1.2));
 } else if (EP === 'kushner_en') {
 const ORG = '#e0a100';
 const stamp = (txt, cx, cy, w, col, t0, rot = -7, fs = 56) => { const st = document.createElementNS(NS, 'g'); st.setAttribute('transform', `rotate(${rot} ${cx} ${cy})`); CUR.g.appendChild(st);
